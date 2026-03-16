@@ -1,3 +1,256 @@
+<label class="settings-label">ژمارەی ساختەکار:</label>
+                <input type="number" id="imposter-count" value="1" min="1" max="3">
+            </div>
+        </div>
+        <div id="players-waiting" style="margin: 15px 0; min-height: 40px;"></div>
+        <button onclick="startOnlineGame()" id="start-btn" style="display:none; background: #27ae60;">دەستپێکردن 🚀</button>
+        
+        <div class="qr-container">
+            <p style="font-size: 12px; margin-bottom: 10px;">بۆ جۆین بوونی خێرا سکان بکە:</p>
+            <img id="qr-code" style="border-radius: 10px; width: 130px; background: white; padding: 5px;">
+        </div>
+    </div>
+
+    <div id="join-area" style="display:none;">
+        <input type="text" id="join-name-input" placeholder="ناوی خۆت بنووسە">
+        <input type="number" id="join-room-input" placeholder="کۆدی ژوور (٤ ڕەقەم)">
+        <button onclick="processJoin()">چوونە ژوورەوە</button>
+    </div>
+</div>
+
+<div class="app" id="game-screen" style="display:none;">
+    <h2 id="player-role-name">---</h2>
+    <div id="timer-display" class="timer-display">00:00</div>
+    <div id="secret-box" style="font-size: 28px; padding: 30px; background: white; color: #333; border-radius: 20px; margin: 20px 0; font-weight: bold;">...</div>
+    
+    <button id="host-trigger-vote" onclick="triggerVoting()" style="display:none; background: #e74c3c; margin-top: 20px;">وەستاندن و دەنگدان 🗳️</button>
+</div>
+
+<div class="app" id="voting-screen" style="display:none;">
+    <h2>🗳️ کاتی دەنگدانە!</h2>
+    <p>بەڕای تۆ کێ ساختەکارە؟</p>
+    <div id="vote-list" style="margin: 20px 0;"></div>
+    <p id="vote-status" style="color: #f1c40f;"></p>
+
+    <button id="host-end-vote" onclick="triggerResults()" style="display:none; background: #27ae60; margin-top: 20px;">پیشاندانی ئەنجام 📊</button>
+</div>
+
+<div class="app" id="results-screen" style="display:none;">
+    <h2>📊 ئەنجامی کۆتایی</h2>
+    <div id="results-content" class="result-box"></div>
+    <div id="real-imposters-box" class="real-imposter"></div>
+    
+    <button onclick="location.reload()" style="background: #333; margin-top: 30px;">🔄 یارییەکی نوێ</button>
+</div>
+
+<script>
+    const lobbyMusic = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3'); 
+    lobbyMusic.loop = true; lobbyMusic.volume = 0.3;
+    const startSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCGX5s8Z8m-DhMXDRVmF0F6Yje_p7A",
+        authDomain: "yousif-eda79.firebaseapp.com",
+        databaseURL: "https://yousif-eda79-default-rtdb.firebaseio.com",
+        projectId: "yousif-eda79",
+        storageBucket: "yousif-eda79.appspot.com",
+        messagingSenderId: "748927706716",
+        appId: "1:748927706716:web:19d974c0846e8103986884"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    
+    let roomID, myName, isHost = false, timerInterval;
+
+    function listenToRoomStatus() {
+        db.ref('rooms/' + roomID + '/status').on('value', snap => {
+            let s = snap.val();
+            if(s === "active") loadGameView();
+            else if(s === "voting") loadVotingView();
+            else if(s === "results") loadResultsView();
+        });
+    }
+
+    function showHost() {
+        isHost = true;
+        lobbyMusic.play().catch(e=>{});
+        roomID = Math.floor(1000 + Math.random() * 9999).toString();
+        document.getElementById('room-code-display').innerText = roomID;
+        document.getElementById('initial-actions').style.display = 'none';
+        document.getElementById('host-area').style.display = 'block';
+        
+        document.getElementById('qr-code').src = https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${window.location.href};
+
+        db.ref('rooms/' + roomID + '/players').on('value', (snap) => {
+            const players = snap.val();
+            if(players) {
+                document.getElementById('players-waiting').innerHTML = Object.values(players).map(p => `<span class="player-card">${p.
+name}</span>`).join("");
+                if(Object.keys(players).length >= 3) document.getElementById('start-btn').style.display = 'block';
+            }
+        });
+        listenToRoomStatus();
+    }
+
+    function showJoin() {
+        lobbyMusic.play().catch(e=>{});
+        document.getElementById('initial-actions').style.display = 'none';
+        document.getElementById('join-area').style.display = 'block';
+    }
+
+    function processJoin() {
+        myName = document.getElementById('join-name-input').value.trim();
+        roomID = document.getElementById('join-room-input').value.trim();
+        if(!myName || !roomID) return alert("تکایە ناو و کۆد بنووسە!");
+        
+        db.ref('rooms/' + roomID + '/players').push({ name: myName });
+        document.getElementById('join-area').innerHTML = "<h3>جۆین بوویت! چاوەڕێی دەستپێکردن بکە... 🎵</h3>";
+        listenToRoomStatus();
+    }
+
+    function startOnlineGame() {
+        const words = ["کەباب", "پیتزا", "هەولێر", "سلێمانی", "مۆبایل", "سەیارە", "فڕۆکە", "قوتابخانە", "پارک", "زانکۆ", "نەخۆشخانە"];
+        let secretWord = words[Math.floor(Math.random() * words.length)];
+        let reqTime = (parseInt(document.getElementById('game-time').value) || 3) * 60;
+        let reqImposters = parseInt(document.getElementById('imposter-count').value) || 1;
+        
+        db.ref('rooms/' + roomID + '/players').once('value', snap => {
+            let players = snap.val();
+            let keys = Object.keys(players);
+            
+            if (reqImposters >= keys.length) reqImposters = keys.length - 1;
+            let shuffledKeys = keys.sort(() => 0.5 - Math.random());
+            let imposterIDs = shuffledKeys.slice(0, reqImposters);
+
+            db.ref('rooms/' + roomID).update({ 
+                status: "active", 
+                word: secretWord, 
+                imposters: imposterIDs, 
+                duration: reqTime,
+                votes: null // سڕینەوەی دەنگەکانی پێشوو ئەگەر هەبێت
+            });
+        });
+    }
+
+    function loadGameView() {
+        lobbyMusic.pause();
+        startSound.play().catch(e=>{});
+        document.getElementById('lobby').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'block';
+        document.getElementById('player-role-name').innerText = "یاریزان: " + (myName || "Host");
+        
+        if(isHost) document.getElementById('host-trigger-vote').style.display = 'block';
+        
+        db.ref('rooms/' + roomID).once('value', snap => {
+            let data = snap.val();
+            let myKey = Object.keys(data.players).find(k => data.players[k].name === myName);
+            let box = document.getElementById('secret-box');
+            
+            if(data.imposters && data.imposters.includes(myKey)) {
+                box.innerText = "تۆ ساختەکاریت! 🤫";
+                box.style.color = "#e74c3c";
+            } else {
+                box.innerText = "وشە: " + data.word;
+                box.style.color = "#27ae60";
+            }
+            startTimer(data.duration);
+        });
+    }
+
+    function startTimer(seconds) {
+        let timeLeft = seconds;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            let min = Math.floor(timeLeft / 60);
+            let sec = timeLeft % 60;
+            document.getElementById('timer-display').innerText = ${min}:${sec < 10 ? '0' : ''}${sec};
+            
+            if(timeLeft <= 0) { 
+                clearInterval(timerInterval); 
+                document.getElementById('timer-display').innerText = "کاتی دەنگدانە!";
+                if(isHost) triggerVoting(); // ئۆتۆماتیکی دەچێتە دەنگدان
+            }
+            timeLeft--;
+        }, 1000);
+    }
+
+    // --- بەشی دەنگدان ---
+    function triggerVoting() {
+        db.ref('rooms/' + roomID).update({ status: "voting" });
+    }
+
+    function loadVotingView() {
+        clearInterval(timerInterval);
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('voting-screen').style.display = 'block';
+if(isHost) document.getElementById('host-end-vote').style.display = 'block';
+
+        db.ref('rooms/' + roomID + '/players').once('value', snap => {
+            let players = snap.val();
+            let html = "";
+            for(let key in players) {
+                // با یاریزان نەتوانێت دەنگ بە خۆی بدات
+                if(players[key].name !== myName) {
+                    html += <button class="vote-btn" onclick="submitVote('${players[key].name}', this)">دەنگدان بۆ: ${players[key].name}</button>;
+                }
+            }
+            document.getElementById('vote-list').innerHTML = html;
+        });
+    }
+
+    function submitVote(votedName, btnElement) {
+        if(!myName) return; // ئەگەر Host بوو و یاری نەکرد با نەتوانێ دەنگ بدات
+        db.ref('rooms/' + roomID + '/votes/' + myName).set(votedName);
+        
+        // کوژاندنەوەی دوگمەکان دوای دەنگدان
+        let buttons = document.querySelectorAll('.vote-btn');
+        buttons.forEach(b => b.disabled = true);
+        document.getElementById('vote-status').innerText = "دەنگەکەت تۆمار کرا ✓";
+    }
+
+    // --- بەشی ئەنجام ---
+    function triggerResults() {
+        db.ref('rooms/' + roomID).update({ status: "results" });
+    }
+
+    function loadResultsView() {
+        document.getElementById('voting-screen').style.display = 'none';
+        document.getElementById('results-screen').style.display = 'block';
+        
+        db.ref('rooms/' + roomID).once('value', snap => {
+            let data = snap.val();
+            let players = data.players;
+            let votes = data.votes || {};
+            let imposters = data.imposters || [];
+            
+            // کۆکردنەوەی دەنگەکان
+            let tally = {};
+            for(let voter in votes) {
+                let votedFor = votes[voter];
+                tally[votedFor] = (tally[votedFor] || 0) + 1;
+            }
+            
+            // پیشاندانی دەنگەکان
+            let voteHtml = "<ul style='list-style:none; padding:0; text-align:right;'>";
+            if(Object.keys(tally).length === 0) {
+                voteHtml += "<li>کەس دەنگی نەداوە!</li>";
+            } else {
+                for(let person in tally) {
+                    voteHtml += <li style="font-size:18px; margin:5px 0;">👤 ${person}: <b style="color:#f1c40f">${tally[person]} دەنگ</b></li>;
+                }
+            }
+            voteHtml += "</ul>";
+            document.getElementById('results-content').innerHTML = voteHtml;
+            
+            // پیشاندانی ساختەکارە ڕاستەقینەکە
+            let imposterNames = imposters.map(key => players[key] ? players[key].name : "نەزانراو").join(" و ");
+            document.getElementById('real-imposters-box').innerText = "ساختەکاری ڕاستەقینە: " + imposterNames;
+        });
+    }
+</script>
+</body>
+</html>
 <!DOCTYPE html>
 <html lang="ku" dir="rtl">
 <head>
@@ -34,12 +287,15 @@
             width: 100%; padding: 15px; margin: 10px 0; border-radius: 15px; border: none;
             background: linear-gradient(135deg, #00b4db, #0083b0); color: white;
             font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
+        button:hover { transform: translateY(-2px); }
+        button:disabled { background: gray; cursor: not-allowed; opacity: 0.6; }
 
         input {
             width: 100%; padding: 15px; margin: 10px 0; border-radius: 15px;
             border: none; background: rgba(255,255,255,0.9); text-align: center;
-            font-size: 16px; color: #333; font-weight: bold;
+            font-size: 16px; color: #333; font-weight: bold; box-sizing: border-box;
         }
 
         .room-id {
@@ -59,6 +315,12 @@
             margin-top: 25px; padding: 15px; background: rgba(255,255,255,0.1);
             border-radius: 20px; display: inline-block;
         }
+
+        /* ستایلی تایبەت بە ئەنجام و دەنگدان */
+        .vote-btn { background: linear-gradient(135deg, #e67e22, #d35400); margin: 5px 0; }
+        .result-box { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; margin: 10px 0; }
+        .real-imposter { color: #e74c3c; font-size: 24px; font-weight: bold; margin-top: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .settings-label { font-size: 14px; margin-bottom: -5px; display: block; opacity: 0.8;}
     </style>
 </head>
 <body>
@@ -75,125 +337,8 @@
     <div id="host-area" style="display:none;">
         <div class="room-id" id="room-code-display">----</div>
         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <input type="number" id="game-time" value="3" placeholder="کات">
-            <input type="number" id="imposter-count" value="1" placeholder="ساختەکار">
-        </div>
-        <div id="players-waiting"></div>
-        <button onclick="startOnlineGame()" id="start-btn" style="display:none; background: #27ae60;">دەستپێکردن 🚀</button>
-        
-        <div class="qr-container">
-            <p style="font-size: 12px; margin-bottom: 10px;">بۆ جۆین بوونی خێرا سکان بکە:</p>
-            <img id="qr-code" style="border-radius: 10px; width: 130px; background: white; padding: 5px;">
-        </div>
-    </div>
-
-    <div id="join-area" style="display:none;">
-        <input type="text" id="join-name-input" placeholder="ناوی تۆ">
-        <input type="number" id="join-room-input" placeholder="کۆدی ژوور">
-        <button onclick="processJoin()">چوونە ژوورەوە</button>
-    </div>
-</div>
-
-<div class="app" id="game-screen" style="display:none;">
-    <div id="timer-display" class="timer-display">00:00</div>
-    <div id="secret-box" style="font-size: 30px; padding: 40px; background: white; color: #333; border-radius: 20px; margin: 20px 0;">...</div>
-    <button onclick="location.reload()" style="background: #333;">🔄 گەڕانەوە</button>
-</div>
-
-<script>
-    // --- میوزیکی ئارام (Lofi Ambient) ---
-    const lobbyMusic = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3'); 
-    lobbyMusic.loop = true;
-    lobbyMusic.volume = 0.3;
-
-    const startSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyCGX5s8Z8m-DhMXDRVmF0F6Yje_p7A",
-        authDomain: "yousif-eda79.firebaseapp.com",
-        databaseURL: "https://yousif-eda79-default-rtdb.firebaseio.com",
-        projectId: "yousif-eda79",
-        storageBucket: "yousif-eda79.appspot.com",
-        messagingSenderId: "748927706716",
-        appId: "1:748927706716:web:19d974c0846e8103986884"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    let roomID, myName;
-
-    function showHost() {
-        lobbyMusic.play();
-        roomID = Math.floor(1000 + Math.random() * 9999).toString();
-        document.getElementById('room-code-display').innerText = roomID;
-        document.getElementById('initial-actions').style.display = 'none';
-        document.getElementById('host-area').style.display = 'block';
-        
-        // دروستکردنی QR Code بۆ لینکەکە
-        document.getElementById('qr-code').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${window.location.href}`;
-
-        db.ref('rooms/' + roomID + '/players').on('value', (snap) => {
-            const players = snap.val();
-            if(players) {
-                document.getElementById('players-waiting').innerHTML = Object.values(players).map(p => `<span class="player-card">${p.name}</span>`).join("");
-                if(Object.keys(players).length >= 2) document.getElementById('start-btn').style.display = 'block';
-            }
-        });
-    }
-
-    function showJoin() {
-        lobbyMusic.play();
-        document.getElementById('initial-actions').style.display = 'none';
-        document.getElementById('join-area').style.display = 'block';
-    }
-
-    function processJoin() {
-        myName = document.getElementById('join-name-input').value.trim();
-        roomID = document.getElementById('join-room-input').value.trim();
-        if(!myName || !roomID) return;
-        db.ref('rooms/' + roomID + '/players').push({ name: myName });
-        document.getElementById('join-area').innerHTML = "<h3>جۆین بوویت! چاوەڕێ بکە... 🎵</h3>";
-        db.ref('rooms/' + roomID + '/status').on('value', snap => { if(snap.val() === "active") loadGameView(); });
-    }
-
-    function startOnlineGame() {
-        const words = ["کەباب", "پیتزا", "هەولێر", "سلێمانی", "مۆبایل", "سەیارە", "فڕۆکە", "قوتابخانە"];
-        let secretWord = words[Math.floor(Math.random() * words.length)];
-        let reqTime = parseInt(document.getElementById('game-time').value) * 60;
-        
-        db.ref('rooms/' + roomID + '/players').once('value', snap => {
-            let keys = Object.keys(snap.val());
-            let imposterID = keys[Math.floor(Math.random() * keys.length)];
-            db.ref('rooms/' + roomID).update({ status: "active", word: secretWord, imposter: imposterID, duration: reqTime });
-            loadGameView();
-        });
-    }
-
-    function loadGameView() {
-        lobbyMusic.pause();
-        startSound.play();
-        document.getElementById('lobby').style.display = 'none';
-        document.getElementById('game-screen').style.display = 'block';
-        
-        db.ref('rooms/' + roomID).once('value', snap => {
-            let data = snap.val();
-            let myKey = Object.keys(data.players).find(k => data.players[k].name === myName);
-            let box = document.getElementById('secret-box');
-            box.innerText = (myKey === data.imposter) ? "تۆ ساختەکاریت! 🤫" : "وشە: " + data.word;
-            startTimer(data.duration);
-        });
-    }
-
-    function startTimer(seconds) {
-        let timeLeft = seconds;
-        let interval = setInterval(() => {
-            let min = Math.floor(timeLeft / 60);
-            let sec = timeLeft % 60;
-            document.getElementById('timer-display').innerText = `${min}:${sec < 10 ? '0' : ''}${sec}`;
-            if(timeLeft <= 0) { clearInterval(interval); document.getElementById('timer-display').innerText = "کات تەواو!"; }
-            timeLeft--;
-        }, 1000);
-    }
-</script>
-</body>
-</html>
+            <div style="flex: 1;">
+                <label class="settings-label">کاتی یاری (خولەک):</label>
+                <input type="number" id="game-time" value="3" min="1">
+            </div>
+            <div style="flex: 1;">
