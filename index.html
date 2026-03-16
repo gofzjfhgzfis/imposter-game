@@ -10,68 +10,130 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <style>
-        :root { --primary: #27ae60; --dark: #2c3e50; --light: #f4f7f6; --accent: #3498db; --danger: #e74c3c; }
-        body { font-family: 'Tahoma', sans-serif; background: var(--dark); color: #333; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .app { background: var(--light); width: 100%; max-width: 450px; border-radius: 25px; padding: 25px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
-        button { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.3s; }
+        /* باکگراوندی جووڵاو */
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Tahoma', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(-45deg, #1a2a6c, #11998e, #38ef7d, #2980b9);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: #fff;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* دیزاینی شوشەیی (Glassmorphism) بۆ کاردەکان */
+        .app {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 100%;
+            max-width: 450px;
+            border-radius: 25px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        h1 { margin-top: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .dev-tag { background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; font-size: 14px; }
+
+        /* دوگمە و خانەکان */
+        button {
+            width: 100%; padding: 15px; margin: 10px 0; border-radius: 15px; border: none;
+            background: linear-gradient(135deg, #6dd5ed, #2193b0); color: white;
+            font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
         button:active { transform: scale(0.98); }
-        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #ddd; text-align: center; font-size: 16px; box-sizing: border-box; }
+
+        .btn-host { background: linear-gradient(135deg, #f12711, #f5af19); }
+        .btn-start { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .btn-exit { background: rgba(0,0,0,0.5); }
+
+        input {
+            width: 100%; padding: 15px; margin: 10px 0; border-radius: 15px;
+            border: none; background: rgba(255,255,255,0.9);
+            text-align: center; font-size: 16px; box-sizing: border-box; outline: none;
+            color: #333; font-weight: bold;
+        }
+
+        /* ستایلی تایبەت بە ژوور و یاریزانەکان */
+        .room-id {
+            font-size: 38px; font-weight: bold; color: #fff; background: rgba(0,0,0,0.3);
+            padding: 15px; border-radius: 15px; margin: 15px 0; letter-spacing: 5px;
+            border: 2px dashed rgba(255,255,255,0.5); text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
         
-        .room-id { font-size: 32px; font-weight: bold; color: var(--accent); background: #eee; padding: 15px; border-radius: 15px; margin: 10px 0; letter-spacing: 5px; border: 2px dashed var(--accent); }
-        
-        /* ستایلی لیستی ناوەکان */
-        .player-card { background: white; padding: 8px 15px; margin: 5px; border-radius: 20px; display: inline-block; border: 1px solid #ddd; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .remove-btn { color: var(--danger); margin-right: 8px; cursor: pointer; font-size: 18px; }
-        
-        .secret-card { font-size: 28px; padding: 40px; background: white; border-radius: 20px; border: 4px solid var(--primary); margin: 20px 0; font-weight: bold; }
+        .player-card {
+            background: rgba(255,255,255,0.2); padding: 8px 15px; margin: 5px;
+            border-radius: 20px; display: inline-block; border: 1px solid rgba(255,255,255,0.4);
+            font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .secret-card {
+            font-size: 30px; padding: 40px; background: white; border-radius: 20px;
+            margin: 20px 0; font-weight: bold; color: #333;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1), 0 10px 30px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body>
 
 <div class="app" id="lobby">
-    <h1>🕵️ ساختەکار ئۆنلاین</h1>
-    <span style="color: var(--accent); font-weight: bold;">پەرەپێدەر: یوسف</span>
+    <h1>🕵️ ساختەکار کێیە؟</h1>
+    <span class="dev-tag">پەرەپێدەر: یوسف</span>
 
-    <div id="initial-actions" style="margin-top: 20px;">
-        <button onclick="showHost()">🏠 دروستکردنی ژوور (Host)</button>
-        <button onclick="showJoin()" style="background: var(--accent);">🚪 جۆین بوون (Join)</button>
+    <div id="initial-actions" style="margin-top: 30px;">
+        <button class="btn-host" onclick="showHost()">🏠 دروستکردنی ژوور (Host)</button>
+        <button onclick="showJoin()">🚪 جۆین بوون (Join)</button>
     </div>
 
     <div id="host-area" style="display:none;">
         <p>کۆدی ژوورەکە بۆ هاوڕێکانت بنێرە:</p>
         <div class="room-id" id="room-code-display">----</div>
         
-        <div style="background: #fff; padding: 10px; border-radius: 15px; border: 1px solid #ddd;">
-            <label style="font-weight: bold; display: block; margin-bottom: 5px;">👥 ناوی هاوڕێکانت لێرە زیاد بکە:</label>
+        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; margin-top: 15px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 10px;">👥 ناوی هاوڕێکانت لێرە زیاد بکە:</label>
             <div style="display: flex; gap: 5px;">
                 <input type="text" id="host-player-input" placeholder="ناو بنووسە..." style="margin: 0;">
-                <button onclick="addPlayerByHost()" style="width: auto; margin: 0; background: var(--accent);">+ زیادکردن</button>
+                <button onclick="addPlayerByHost()" style="width: auto; margin: 0; padding: 0 20px;">+ زیادکردن</button>
             </div>
         </div>
 
         <div id="players-waiting" style="margin: 20px 0; min-height: 50px;"></div>
-        <button onclick="startOnlineGame()" id="start-btn" style="display:none; background: #e67e22;">دەستپێکردنی یاری 🚀</button>
+        <button onclick="startOnlineGame()" id="start-btn" class="btn-start" style="display:none;">دەستپێکردنی یاری 🚀</button>
     </div>
 
     <div id="join-area" style="display:none;">
         <input type="text" id="join-name-input" placeholder="ناوی خۆت بنووسە">
         <input type="number" id="join-room-input" placeholder="کۆدی ژوور (٤ ڕەقەم)">
-        <button onclick="processJoin()">چوونە ژوورەوە 🚪</button>
+        <button onclick="processJoin()" class="btn-start">چوونە ژوورەوە 🚪</button>
     </div>
 </div>
 
 <div class="app" id="game-screen" style="display:none;">
-    <h2 id="display-name-tag">---</h2>
+    <h2 id="display-name-tag" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">---</h2>
     <div id="secret-box" class="secret-card">چاوەڕێ بکە...</div>
-    <button onclick="location.reload()" style="background: var(--dark);">🔄 گەڕانەوە بۆ سەرەتا</button>
+    <p style="opacity: 0.8;">گفتوگۆ بکەن تا ساختەکارەکە دەدۆزنەوە!</p>
+    <button onclick="location.reload()" class="btn-exit">🔄 گەڕانەوە بۆ سەرەتا</button>
 </div>
 
 <script>
-    // --- دەنگی دەستپێکردن ---
     const startSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
 
-    // --- زانیارییەکانی Firebase یوسف ---
+    // Firebase یوسف
     const firebaseConfig = {
         apiKey: "AIzaSyCGX5s8Z8m-DhMXDRVmF0F6Yje_p7A",
         authDomain: "yousif-eda79.firebaseapp.com",
@@ -94,7 +156,6 @@
         document.getElementById('initial-actions').style.display = 'none';
         document.getElementById('host-area').style.display = 'block';
 
-        // گوێگرتن لە داتابەیس
         db.ref('rooms/' + roomID + '/players').on('value', (snap) => {
             const players = snap.val();
             let listHTML = "";
@@ -136,7 +197,7 @@
     }
 
     function startOnlineGame() {
-        const words = ["کەباب", "پیتزا", "هەولێر", "سلێمانی", "مۆبایل", "سەیارە", "فڕۆکە", "قوتابخانە"];
+        const words = ["کەباب", "پیتزا", "هەولێر", "سلێمانی", "مۆبایل", "سەیارە", "فڕۆکە", "قوتابخانە", "پارک", "زانکۆ"];
         let secretWord = words[Math.floor(Math.random() * words.length)];
         
         db.ref('rooms/' + roomID + '/players').once('value', (snap) => {
@@ -166,10 +227,10 @@
             let box = document.getElementById('secret-box');
             if(myKey === data.imposter) {
                 box.innerText = "تۆ ساختەکاریت! 🤫";
-                box.style.color = "var(--danger)";
+                box.style.color = "#e74c3c";
             } else {
                 box.innerText = "وشە: " + data.word;
-                box.style.color = "var(--primary)";
+                box.style.color = "#27ae60";
             }
         });
     }
