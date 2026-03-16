@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ساختەکار ئۆنلاین - یوسف</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        :root { --primary: #27ae60; --dark: #2c3e50; --light: #f4f7f6; --accent: #3498db; --danger: #e74c3c; }
+        body { font-family: 'Tahoma', sans-serif; background: var(--dark); color: #333; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .app { background: var(--light); width: 100%; max-width: 450px; border-radius: 25px; padding: 25px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        button { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: none; background: var(--primary); color: white; font-weight: bold; font-size: 18px; cursor: pointer; transition: 0.3s; }
+        button:hover { opacity: 0.9; }
+        button:active { transform: scale(0.98); }
+        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #ddd; text-align: center; font-size: 16px; box-sizing: border-box; }
+        .room-id { font-size: 32px; font-weight: bold; color: var(--accent); background: #eee; padding: 15px; border-radius: 15px; margin: 10px 0; letter-spacing: 5px; border: 2px dashed var(--accent); }
+        .player-card { background: white; padding: 8px 15px; margin: 5px; border-radius: 20px; display: inline-block; border: 1px solid #ddd; font-weight: bold; }
+        .secret-card { font-size: 28px; padding: 40px; background: white; border-radius: 20px; border: 4px solid var(--primary); margin: 20px 0; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="app" id="lobby">
+    <h1>🕵️ ساختەکار ئۆنلاین</h1>
+    <span style="color: var(--accent); font-weight: bold;">پەرەپێدەر: یوسف</span>
+
+    <div id="initial-actions" style="margin-top: 20px;">
+        <button onclick="showHost()">🏠 دروستکردنی ژوور (Host)</button>
+        <button onclick="showJoin()" style="background: var(--accent);">🚪 جۆین بوون (Join)</button>
+    </div>
+
+    <div id="host-area" style="display:none;">
+        <p>کۆدی ژوور بنێرە بۆ هاوڕێکانت:</p>
+        <div class="room-id" id="room-code-display">----</div>
+        <div id="players-waiting" style="margin: 20px 0;">چاوەڕێی یاریزانەکانین...</div>
+        <button onclick="startOnlineGame()" id="start-btn" style="display:none; background: #e67e22;">دەستپێکردنی یاری 🚀</button>
+    </div>
+
+    <div id="join-area" style="display:none;">
+        <input type="text" id="player-name-input" placeholder="ناوی خۆت">
+        <input type="number" id="room-code-input" placeholder="کۆدی ژوور">
+        <button onclick="processJoin()">چوونە ژوورەوە 🚪</button>
+    </div>
+</div>
+
+<div class="app" id="game-screen" style="display:none;">
+    <h2 id="display-name-tag">---</h2>
+    <div id="secret-box" class="secret-card">چاوەڕێ بکە...</div>
+    <button onclick="location.reload()" style="background: var(--dark);">🔄 گەڕانەوە</button>
+</div>
+
+<script>
+    // --- Firebase Config (یوسف) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCGX5s8Z8m-DhMXDRVmF0F6Yje_p7A",
+        authDomain: "yousif-eda79.firebaseapp.com",
+        databaseURL: "https://yousif-eda79-default-rtdb.firebaseio.com",
+        projectId: "yousif-eda79",
+        storageBucket: "yousif-eda79.appspot.com",
+        messagingSenderId: "748927706716",
+        appId: "1:748927706716:web:19d974c0846e8103986884"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let roomID, myName, isHost = false;
+
+    function showHost() {
+        isHost = true;
+        roomID = Math.floor(1000 + Math.random() * 9000).toString();
+        document.getElementById('room-code-display').innerText = roomID;
+        document.getElementById('initial-actions').style.display = 'none';
+        document.getElementById('host-area').style.display = 'block';
+
+        db.ref('rooms/' + roomID + '/players').on('value', (snap) => {
+            const players = snap.val();
+            if(players) {
+                let list = Object.values(players).map(p => `<span class="player-card">${p.name}</span>`).join("");
+                document.getElementById('players-waiting').innerHTML = list;
+                if(Object.keys(players).length >= 3) document.getElementById('start-btn').style.display = 'block';
+            }
+        });
+    }
+
+    function showJoin() {
+        document.getElementById('initial-actions').style.display = 'none';
+        document.getElementById('join-area').style.display = 'block';
+    }
+
+    function processJoin() {
+        myName = document.getElementById('player-name-input').value.trim();
+        roomID = document.getElementById('room-code-input').value.trim();
+        if(!myName || !roomID) return alert("تکایە ناو و کۆد بنووسە");
+
+        db.ref('rooms/' + roomID + '/players').push({ name: myName });
+        document.getElementById('join-area').innerHTML = "<h3>تۆ جۆین بوویت! چاوەڕێ بکە...</h3>";
+
+        db.ref('rooms/' + roomID + '/status').on('value', (snap) => {
+            if(snap.val() === "active") loadGameView();
+        });
+    }
+
+    function startOnlineGame() {
+        const words = ["کەباب", "پیتزا", "هەولێر", "مۆبایل", "سەیارە"];
+        let secret = words[Math.floor(Math.random() * words.length)];
+        
+        db.ref('rooms/' + roomID + '/players').once('value', (snap) => {
+            let players = snap.val();
+            let keys = Object.keys(players);
+            let imposterID = keys[Math.floor(Math.random() * keys.length)];
+
+            db.ref('rooms/' + roomID).update({
+                status: "active",
+                word: secret,
+                imposter: imposterID
+            });
+            if(!myName) myName = "Host";
+            loadGameView();
+        });
+    }
+
+    function loadGameView() {
+        document.getElementById('lobby').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'block';
+        document.getElementById('display-name-tag').innerText = "یاریزان: " + (myName || "میوان");
+
+        db.ref('rooms/' + roomID).once('value', (snap) => {
+            let data = snap.val();
+            let myKey = Object.keys(data.players).find(k => data.players[k].name === myName);
+            let box = document.getElementById('secret-box');
+            if(myKey === data.imposter) {
+                box.innerText = "تۆ ساختەکاریت! 🤫";
+                box.style.color = "var(--danger)";
+            } else {
+                box.innerText = "وشە: " + data.word;
+                box.style.color = "var(--primary)";
+            }
+        });
+    }
+</script>
+</body>
+</html>
