@@ -12,17 +12,10 @@
     <style>
         /* باکگراوندی جووڵاو */
         body {
-            margin: 0;
-            padding: 20px;
-            font-family: 'Tahoma', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            margin: 0; padding: 20px; font-family: 'Tahoma', sans-serif;
+            min-height: 100vh; display: flex; justify-content: center; align-items: center;
             background: linear-gradient(-45deg, #1a2a6c, #11998e, #38ef7d, #2980b9);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            color: #fff;
+            background-size: 400% 400%; animation: gradientBG 15s ease infinite; color: #fff;
         }
 
         @keyframes gradientBG {
@@ -31,18 +24,11 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* دیزاینی شوشەیی (Glassmorphism) بۆ کاردەکان */
+        /* دیزاینی شوشەیی (Glassmorphism) */
         .app {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            width: 100%;
-            max-width: 450px;
-            border-radius: 25px;
-            padding: 30px;
-            text-align: center;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3); width: 100%; max-width: 450px;
+            border-radius: 25px; padding: 30px; text-align: center; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
 
         h1 { margin-top: 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
@@ -62,14 +48,17 @@
         .btn-start { background: linear-gradient(135deg, #11998e, #38ef7d); }
         .btn-exit { background: rgba(0,0,0,0.5); }
 
-        input {
+        input, select {
             width: 100%; padding: 15px; margin: 10px 0; border-radius: 15px;
             border: none; background: rgba(255,255,255,0.9);
             text-align: center; font-size: 16px; box-sizing: border-box; outline: none;
             color: #333; font-weight: bold;
         }
 
-        /* ستایلی تایبەت بە ژوور و یاریزانەکان */
+        .settings-row { display: flex; gap: 10px; margin: 10px 0; }
+        .settings-row > div { flex: 1; }
+        .settings-label { font-size: 14px; display: block; margin-bottom: 5px; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);}
+
         .room-id {
             font-size: 38px; font-weight: bold; color: #fff; background: rgba(0,0,0,0.3);
             padding: 15px; border-radius: 15px; margin: 15px 0; letter-spacing: 5px;
@@ -87,6 +76,11 @@
             margin: 20px 0; font-weight: bold; color: #333;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.1), 0 10px 30px rgba(0,0,0,0.3);
         }
+
+        .timer-display {
+            font-size: 40px; font-weight: bold; margin: 15px 0;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.5); color: #f1c40f;
+        }
     </style>
 </head>
 <body>
@@ -101,11 +95,22 @@
     </div>
 
     <div id="host-area" style="display:none;">
-        <p>کۆدی ژوورەکە بۆ هاوڕێکانت بنێرە:</p>
+        <p>کۆدی ژوورەکە بنێرە بۆ هاوڕێکانت:</p>
         <div class="room-id" id="room-code-display">----</div>
         
-        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; margin-top: 15px;">
-            <label style="font-weight: bold; display: block; margin-bottom: 10px;">👥 ناوی هاوڕێکانت لێرە زیاد بکە:</label>
+        <div class="settings-row">
+            <div>
+                <label class="settings-label">⏱️ کات (خولەک):</label>
+                <input type="number" id="game-time" value="3" min="1" max="10">
+            </div>
+            <div>
+                <label class="settings-label">🤫 ژمارەی ساختەکار:</label>
+                <input type="number" id="imposter-count" value="1" min="1" max="3">
+            </div>
+        </div>
+        
+        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 15px; margin-top: 10px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 10px;">👥 زیادکردنی هاوڕێ لەلایەن خۆتەوە:</label>
             <div style="display: flex; gap: 5px;">
                 <input type="text" id="host-player-input" placeholder="ناو بنووسە..." style="margin: 0;">
                 <button onclick="addPlayerByHost()" style="width: auto; margin: 0; padding: 0 20px;">+ زیادکردن</button>
@@ -125,15 +130,23 @@
 
 <div class="app" id="game-screen" style="display:none;">
     <h2 id="display-name-tag" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.5);">---</h2>
+    <div id="timer-display" class="timer-display">00:00</div>
     <div id="secret-box" class="secret-card">چاوەڕێ بکە...</div>
-    <p style="opacity: 0.8;">گفتوگۆ بکەن تا ساختەکارەکە دەدۆزنەوە!</p>
+    <p style="opacity: 0.9;">گفتوگۆ بکەن تا ساختەکارەکە دەدۆزنەوە!</p>
     <button onclick="location.reload()" class="btn-exit">🔄 گەڕانەوە بۆ سەرەتا</button>
 </div>
 
 <script>
+    // --- دەنگ و میوزیک ---
+    // میوزیکی چاوەڕوانی (Lobby Music)
+    const lobbyMusic = new Audio('https://assets.mixkit.co/active_storage/sfx/135/135-preview.mp3');
+    lobbyMusic.loop = true;
+    lobbyMusic.volume = 0.4; // دەنگی نزمە بۆ ئەوەی بێزارکەر نەبێت
+
+    // دەنگی دەستپێکردنی یاری
     const startSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
 
-    // Firebase یوسف
+    // زانیارییەکانی Firebase یوسف
     const firebaseConfig = {
         apiKey: "AIzaSyCGX5s8Z8m-DhMXDRVmF0F6Yje_p7A",
         authDomain: "yousif-eda79.firebaseapp.com",
@@ -148,9 +161,15 @@
     const db = firebase.database();
 
     let roomID, myName, isHost = false;
+    let timerInterval;
+
+    function playLobbyMusic() {
+        lobbyMusic.play().catch(e => console.log("یاریزان هێشتا کلیکی نەکردووە بۆ میوزیک"));
+    }
 
     function showHost() {
         isHost = true;
+        playLobbyMusic(); // لێدانی میوزیک
         roomID = Math.floor(1000 + Math.random() * 9000).toString();
         document.getElementById('room-code-display').innerText = roomID;
         document.getElementById('initial-actions').style.display = 'none';
@@ -163,6 +182,7 @@
                 Object.keys(players).forEach(key => {
                     listHTML += `<span class="player-card">${players[key].name}</span>`;
                 });
+                // ئەگەر ٣ یاریزان یان زیاتر هەبوو دوگمەی دەستپێکردن دەردەکەوێت
                 if(Object.keys(players).length >= 3) document.getElementById('start-btn').style.display = 'block';
             }
             document.getElementById('players-waiting').innerHTML = listHTML;
@@ -179,6 +199,7 @@
     }
 
     function showJoin() {
+        playLobbyMusic(); // لێدانی میوزیک
         document.getElementById('initial-actions').style.display = 'none';
         document.getElementById('join-area').style.display = 'block';
     }
@@ -186,10 +207,10 @@
     function processJoin() {
         myName = document.getElementById('join-name-input').value.trim();
         roomID = document.getElementById('join-room-input').value.trim();
-        if(!myName || !roomID) return alert("تکایە ناو و کۆد بنووسە!");
+        if(!myName || !roomID) return alert("تکایە ناو و کۆدی ژوور بنووسە!");
 
         db.ref('rooms/' + roomID + '/players').push({ name: myName });
-        document.getElementById('join-area').innerHTML = "<h3>تۆ جۆین بوویت! چاوەڕێ بکە...</h3>";
+        document.getElementById('join-area').innerHTML = "<h3>تۆ جۆین بوویت! چاوەڕێی دەستپێکردن بکە... 🎵</h3>";
 
         db.ref('rooms/' + roomID + '/status').on('value', (snap) => {
             if(snap.val() === "active") loadGameView();
@@ -197,42 +218,86 @@
     }
 
     function startOnlineGame() {
-        const words = ["کەباب", "پیتزا", "هەولێر", "سلێمانی", "مۆبایل", "سەیارە", "فڕۆکە", "قوتابخانە", "پارک", "زانکۆ"];
+        const words = ["کەباب", "پیتزا", "هەولێر", "سلێمانی", "مۆبایل", "سەیارە", "فڕۆکە", "قوتابخانە", "پارک", "زانکۆ", "کۆمپیوتەر", "یاریگا"];
         let secretWord = words[Math.floor(Math.random() * words.length)];
         
+        let reqTime = parseInt(document.getElementById('game-time').value) || 3;
+        let reqImposters = parseInt(document.getElementById('imposter-count').value) || 1;
+
         db.ref('rooms/' + roomID + '/players').once('value', (snap) => {
             let players = snap.val();
             let keys = Object.keys(players);
-            let imposterID = keys[Math.floor(Math.random() * keys.length)];
+            
+            // دیاریکردنی ساختەکارەکان (زیاتر لە یەکێک ئەگەر دیاری کرابێت)
+            if (reqImposters >= keys.length) reqImposters = keys.length - 1; // نابێت هەموویان ساختەکار بن
+            if (reqImposters < 1) reqImposters = 1;
+
+            let shuffledKeys = keys.sort(() => 0.5 - Math.random());
+            let imposterIDs = shuffledKeys.slice(0, reqImposters);
 
             db.ref('rooms/' + roomID).update({
                 status: "active",
                 word: secretWord,
-                imposter: imposterID
+                imposters: imposterIDs, // ئێستا ئەڕەیەکە (Array) نەک یەک کەس
+                duration: reqTime * 60 // گۆڕینی خولەک بۆ چرکە
             });
             loadGameView();
         });
     }
 
     function loadGameView() {
+        // وەستانی میوزیکی چاوەڕوانی و لێدانی دەنگی دەستپێکردن
+        lobbyMusic.pause();
+        lobbyMusic.currentTime = 0;
         startSound.play().catch(e => console.log("Sound error:", e));
+
         document.getElementById('lobby').style.display = 'none';
         document.getElementById('game-screen').style.display = 'block';
         document.getElementById('display-name-tag').innerText = "یاریزان: " + (myName || "Host");
 
         db.ref('rooms/' + roomID).once('value', (snap) => {
             let data = snap.val();
+            
+            // دۆزینەوەی ئایدی خۆت لەناو داتابەیس
             let myKey = Object.keys(data.players).find(k => data.players[k].name === myName);
             
             let box = document.getElementById('secret-box');
-            if(myKey === data.imposter) {
+            // پشکنین ئایا تۆ یەکێکی لە ساختەکارەکان؟
+            if(data.imposters && data.imposters.includes(myKey)) {
                 box.innerText = "تۆ ساختەکاریت! 🤫";
                 box.style.color = "#e74c3c";
             } else {
                 box.innerText = "وشە: " + data.word;
                 box.style.color = "#27ae60";
             }
+
+            // دەستپێکردنی کاتژمێر (Timer)
+            startTimer(data.duration);
         });
+    }
+
+    function startTimer(totalSeconds) {
+        let timeLeft = totalSeconds;
+        let timerDisplay = document.getElementById('timer-display');
+        
+        clearInterval(timerInterval); // پاککردنەوەی هەر تایمەرێکی پێشوو
+        timerInterval = setInterval(() => {
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+            
+            // ڕێکخستنی شێوەی کاتەکە بۆ نموونە 03:05
+            timerDisplay.innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            
+            if(timeLeft <= 10) timerDisplay.style.color = "#e74c3c"; // ئەگەر ١٠ چرکە ما سوور دەبێت
+            
+            if(timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerDisplay.innerText = "کات تەواو! ⏰";
+                document.getElementById('secret-box').innerText = "کاتی دەنگدانە!";
+                document.getElementById('secret-box').style.color = "#333";
+            }
+            timeLeft--;
+        }, 1000);
     }
 </script>
 </body>
