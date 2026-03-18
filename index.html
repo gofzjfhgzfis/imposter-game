@@ -4,23 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IMPOSTER PRO | Developed by Yusuf</title>
-    
     <link rel="stylesheet" href="style.css">
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
 
     <div class="glass-card">
-        <div id="screen-lobby">
-            <h1>IMPOSTER</h1>
+        <div id="screen-lobby" class="screen active">
+            <h1 class="logo-text">IMPOSTER</h1>
             <span class="dev-badge">Developed by Yusuf</span>
-            <button onclick="initHost()">دروستکردنی ژوور</button>
-            <button class="btn-secondary" onclick="showScreen('screen-join')">جۆین بوون</button>
+            <button class="main-btn" onclick="initHost()">دروستکردنی ژوور</button>
+            <button class="secondary-btn" onclick="showScreen('screen-join')">جۆین بوون</button>
         </div>
 
-        <div id="screen-host" style="display:none;">
+        <div id="screen-host" class="screen">
             <p>کۆدی ژوور</p>
             <div class="room-code" id="display-room-id">----</div>
             <div class="settings-grid">
@@ -34,28 +32,28 @@
                 <option value="گەردوون">🚀 گەردوون</option>
             </select>
             <div id="player-list"></div>
-            <button id="btn-start" style="display:none;" onclick="startGame()">دەستپێکردنی یاری 🚀</button>
+            <button id="btn-start" class="start-btn" style="display:none;" onclick="startGame()">دەستپێکردنی یاری 🚀</button>
         </div>
 
-        <div id="screen-join" style="display:none;">
+        <div id="screen-join" class="screen">
             <h2>جۆین بوون</h2>
             <input type="text" id="join-name" placeholder="ناوی تۆ">
             <input type="number" id="join-code" placeholder="کۆدی ژوور">
-            <button onclick="joinRoom()">چوونە ناو یاری</button>
-            <button class="btn-ghost" onclick="showScreen('screen-lobby')">گەڕانەوە</button>
+            <button class="main-btn" onclick="joinRoom()">چوونە ناو یاری</button>
+            <button class="ghost-btn" onclick="showScreen('screen-lobby')">گەڕانەوە</button>
         </div>
 
-        <div id="screen-game" style="display:none;">
+        <div id="screen-game" class="screen">
             <div class="timer" id="game-timer">00:00</div>
             <div id="role-box" class="word-box">...</div>
-            <p id="cat-hint"></p>
-            <button id="host-stop-btn" class="btn-danger" style="display:none;" onclick="updateStatus('results')">کۆتایی یاری</button>
+            <p id="cat-hint" class="hint-text"></p>
+            <button id="host-stop-btn" class="danger-btn" style="display:none;" onclick="updateStatus('results')">کۆتایی یاری</button>
         </div>
 
-        <div id="screen-results" style="display:none;">
-            <h2>ئەنجامەکان</h2>
-            <div id="imposter-reveal" class="word-box danger-box"></div>
-            <button id="host-replay-btn" style="display:none;" onclick="replayGame()">دووبارە یاری 🔄</button>
+        <div id="screen-results" class="screen">
+            <h2 class="result-title">ئەنجامەکان</h2>
+            <div id="imposter-reveal" class="reveal-box"></div>
+            <button id="host-replay-btn" class="main-btn" style="display:none;" onclick="replayGame()">دووبارە یاری 🔄</button>
         </div>
     </div>
 
