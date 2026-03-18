@@ -13,7 +13,12 @@
     <div class="glass-card">
         <div id="screen-lobby" class="screen active">
             <h1 class="logo-text">IMPOSTER</h1>
-            <p style="opacity:0.5; font-size:12px; letter-spacing:3px; margin-bottom:30px;">PREMIUM EDITION</p>
+            
+            <div class="creator-badge">
+                <span class="pulse-dot"></span>
+                DEVELOPED BY YUSUF
+            </div>
+
             <button onclick="initHost()">دروستکردنی ژوور</button>
             <button style="background: rgba(255,255,255,0.08); color: white;" onclick="showScreen('screen-join')">جۆین بوون</button>
         </div>
@@ -24,7 +29,8 @@
             
             <div id="host-only-ui" style="display:none;">
                 <div style="display: flex; gap: 10px;">
-                    <input type="number" id="inp-time" value="3" min="1" title="کات بە خولەک">
+                    <input type="number" id="inp-time" value="3" min="1" title="کات بە خولەک" placeholder="خولەک">
+                    <input type="number" id="inp-imps" value="1" min="1" title="ژمارەی ساختەکار" placeholder="چەند ساختەکار؟">
                 </div>
                 <select id="inp-cat" class="category-select">
                     <option value="هەمەجۆر" selected>🌍 گشتی (هەمەجۆر)</option>
@@ -59,7 +65,7 @@
 
         <div id="screen-results" class="screen">
             <h2 style="color:#ff4b2b;">ئەنجامەکان</h2>
-            <div id="imposter-reveal" class="word-box" style="background:#ff4b2b; color:white;"></div>
+            <div id="imposter-reveal" class="word-box" style="background:#ff4b2b; color:white; font-size: 20px;"></div>
             <div id="vote-summary" style="line-height:1.8; text-align: right; padding: 10px;"></div>
             <button style="margin-top:20px;" onclick="location.reload()">دووبارە یاری 🔄</button>
         </div>
