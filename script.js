@@ -10,15 +10,19 @@ const db = firebase.database();
 
 let roomID, myName, isHost = false, myKey, timer;
 const dictionary = {
-    "فیلم": ["ئینتەرستێلار", "ئینسیپشن", "سێڤن", "جۆکەر", "باتمان"],
-    "تەکنەلۆژیا": ["ڕۆبۆت", "ئایفۆن", "لابتۆپ", "ئینتەرنێت", "فایەربەیس"],
-    "گەردوون": ["مانگ", "خۆر", "مەریخ", "گاڵاکسی", "نەیزەک"],
-    "هەمەجۆر": ["ماڵ", "قوتابخانە", "کتێب", "سەعات", "پرد"]
+    "فیلم": ["ئینتەرستێلار", "ئینسیپشن", "سێڤن", "جۆکەر", "باتمان", "تایتانیک", "پاشای شێرەکان"],
+    "تەکنەلۆژیا": ["ڕۆبۆت", "ئایفۆن", "لابتۆپ", "ئینتەرنێت", "فایەربەیس", "تێسلا", "درۆن"],
+    "گەردوون": ["مانگ", "خۆر", "مەریخ", "گاڵاکسی", "نەیزەک", "کونە ڕەشەکان", "زوحەل"],
+    "هەمەجۆر": ["ماڵ", "قوتابخانە", "کتێب", "سەعات", "پرد", "ماسی", "دارستان"]
 };
 
+// گۆڕینی شاشە بە ئەنیمەیشن
 function showScreen(id) {
-    document.querySelectorAll('.glass-card > div').forEach(div => div.style.display = 'none');
-    document.getElementById(id).style.display = 'block';
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    setTimeout(() => {
+        const activeScreen = document.getElementById(id);
+        activeScreen.classList.add('active');
+    }, 50);
 }
 
 function updateStatus(s) { db.ref(`rooms/${roomID}/status`).set(s); }
@@ -27,9 +31,11 @@ function initHost() {
     isHost = true;
     myName = prompt("ناوت بنووسە وەک Host:") || "Host";
     roomID = Math.floor(1000 + Math.random() * 9000).toString();
+    
     db.ref(`rooms/${roomID}`).set({ status: 'waiting' });
     const ref = db.ref(`rooms/${roomID}/players`).push({ name: myName });
     myKey = ref.key;
+
     document.getElementById('display-room-id').innerText = roomID;
     showScreen('screen-host');
     listenToPlayers();
@@ -39,13 +45,16 @@ function initHost() {
 function joinRoom() {
     myName = document.getElementById('join-name').value.trim();
     roomID = document.getElementById('join-code').value.trim();
-    if(!myName || !roomID) return alert("زانیارییەکان تەواو بکە");
+    if(!myName || !roomID) return alert("تکایە زانیارییەکان تەواو بکە");
+
     db.ref(`rooms/${roomID}`).once('value', snap => {
-        if(!snap.exists()) return alert("ژوورەکە نییە");
+        if(!snap.exists()) return alert("ژوورەکە بوونی نییە!");
+        if(snap.val().status !== 'waiting') return alert("یارییەکە دەستی پێکردووە!");
+
         const ref = db.ref(`rooms/${roomID}/players`).push({ name: myName });
         myKey = ref.key;
         showScreen('screen-host');
-        document.getElementById('screen-host').innerHTML = `<h3>بەخێرهاتی ${myName}</h3><p>چاوەڕێی دەستپێکردن بکە...</p>`;
+        document.getElementById('screen-host').innerHTML = `<h3>بەخێرهاتی ${myName}</h3><p>چاوەڕێی دەستپێکردنی یوسف بکە...</p>`;
         listenToStatus();
     });
 }
@@ -54,7 +63,7 @@ function listenToPlayers() {
     db.ref(`rooms/${roomID}/players`).on('value', snap => {
         const p = snap.val() || {};
         const count = Object.keys(p).length;
-        document.getElementById('player-list').innerHTML = "یاریزانەکان: " + Object.values(p).map(i => i.name).join(", ");
+        document.getElementById('player-list').innerHTML = `یاریزانەکان (${count}): ` + Object.values(p).map(i => `<b>${i.name}</b>`).join(" - ");
         if(isHost) document.getElementById('btn-start').style.display = count >= 3 ? 'block' : 'none';
     });
 }
@@ -64,6 +73,7 @@ function startGame() {
     const pool = dictionary[cat];
     const word = pool[Math.floor(Math.random() * pool.length)];
     const time = parseInt(document.getElementById('inp-time').value) * 60;
+
     db.ref(`rooms/${roomID}/players`).once('value', snap => {
         const keys = Object.keys(snap.val());
         const imposter = keys[Math.floor(Math.random() * keys.length)];
@@ -89,6 +99,7 @@ function runGame() {
         const d = snap.val();
         const isImp = d.imposters.includes(myKey);
         document.getElementById('role-box').innerText = isImp ? "تۆ ساختەکاریت! 🤫" : d.word;
+        document.getElementById('role-box').style.color = isImp ? "#ff4b2b" : "#2ecc71";
         document.getElementById('cat-hint').innerText = "کەتەگۆری: " + d.category;
         startTimer(d.duration);
     });
@@ -96,6 +107,7 @@ function runGame() {
 
 function startTimer(sec) {
     let t = sec;
+    clearInterval(timer);
     timer = setInterval(() => {
         let m = Math.floor(t/60), s = t%60;
         document.getElementById('game-timer').innerText = `${m}:${s<10?'0':''}${s}`;
@@ -110,7 +122,7 @@ function runResults() {
     db.ref(`rooms/${roomID}`).once('value', snap => {
         const d = snap.val();
         const impName = d.players[d.imposters[0]].name;
-        document.getElementById('imposter-reveal').innerText = "ساختەکار: " + impName;
+        document.getElementById('imposter-reveal').innerText = "ساختەکار بریتی بوو لە: " + impName;
     });
 }
 
