@@ -19,17 +19,15 @@
         </div>
 
         <div id="screen-host" class="screen">
-            <h3 style="opacity:0.6;">Room ID</h3>
+            <h3 style="opacity:0.6;">کۆدی ژوورەکەت</h3>
             <div class="room-code" id="display-room-id">----</div>
             
             <div id="host-only-ui" style="display:none;">
                 <div style="display: flex; gap: 10px;">
-                    <input type="number" id="inp-time" value="3">
-                    <input type="number" id="inp-imps" value="1">
+                    <input type="number" id="inp-time" value="3" min="1" title="کات بە خولەک">
                 </div>
                 <select id="inp-cat" class="category-select">
-                    <option value="" disabled selected>کاتەگۆری هەڵبژێرە ✨</option>
-                    <option value="هەمەجۆر">🌍 گشتی</option>
+                    <option value="هەمەجۆر" selected>🌍 گشتی (هەمەجۆر)</option>
                     <option value="فیلم">🎬 سینەما</option>
                     <option value="تەکنەلۆژیا">💻 تەکنەلۆژیا</option>
                     <option value="گەردوون">🚀 گەردوون</option>
@@ -40,7 +38,7 @@
         </div>
 
         <div id="screen-join" class="screen">
-            <h2>Join Room</h2>
+            <h2>چوونە ناو ژوور</h2>
             <input type="text" id="join-name" placeholder="ناوەکەت بنووسە">
             <input type="number" id="join-code" placeholder="کۆدی ژوور">
             <button onclick="joinRoom()">چوونە ناوەوە</button>
@@ -50,19 +48,19 @@
         <div id="screen-game" class="screen">
             <div class="timer" id="game-timer">00:00</div>
             <div id="role-box" class="word-box">...</div>
-            <p id="cat-hint" style="opacity:0.5;"></p>
-            <button id="stop-game-btn" style="display:none; background: var(--danger); color: white;" onclick="updateStatus('voting')">کۆتایی یاری</button>
+            <p id="cat-hint" style="opacity:0.8; font-weight:bold;"></p>
+            <button id="stop-game-btn" style="display:none; background: #ff4b2b; color: white;" onclick="updateStatus('voting')">کۆتایی و دەنگدان</button>
         </div>
 
         <div id="screen-voting" class="screen">
-            <h2 style="margin-bottom:20px;">کێ گوماناوییە؟</h2>
+            <h2 style="margin-bottom:20px;">کێ گوماناوییە؟ 🧐</h2>
             <div id="voting-list" class="voting-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;"></div>
         </div>
 
         <div id="screen-results" class="screen">
-            <h2 style="color:var(--danger);">ئەنجامەکان</h2>
-            <div id="imposter-reveal" class="word-box" style="background:var(--danger); color:white;"></div>
-            <div id="vote-summary" style="line-height:1.8;"></div>
+            <h2 style="color:#ff4b2b;">ئەنجامەکان</h2>
+            <div id="imposter-reveal" class="word-box" style="background:#ff4b2b; color:white;"></div>
+            <div id="vote-summary" style="line-height:1.8; text-align: right; padding: 10px;"></div>
             <button style="margin-top:20px;" onclick="location.reload()">دووبارە یاری 🔄</button>
         </div>
     </div>
