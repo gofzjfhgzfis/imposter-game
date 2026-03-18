@@ -1,4 +1,3 @@
-// Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyCGX5s8Z8m-DhMXDRVmF0F6Yje_p7A",
     authDomain: "yousif-eda79.firebaseapp.com",
@@ -10,7 +9,6 @@ const db = firebase.database();
 
 let roomID, myKey, isHost = false, timerInterval;
 
-// لیستی وشە کوردییەکان بۆ هەموو کەتەگۆرییەکان
 const dictionary = {
     "فیلم": ["ئینتەرستێلار", "ئینسیپشن", "سێڤن", "باتمان", "جۆکەر", "تایتانیک", "هاری پۆتەر", "پیاوی جاڵجاڵۆکە", "کیسەڵەکان", "ئایۆن مەن"],
     "تەکنەلۆژیا": ["کۆمپیوتەر", "ئینتەرنێت", "مۆبایل", "فایەربەیس", "ڕۆبۆت", "پڕۆگرامینگ", "فەیسبووک", "یوتیوب", "گوگڵ", "زیرەکی دەستکرد"],
@@ -48,9 +46,9 @@ function initHost() {
 function joinRoom() {
     let name = document.getElementById('join-name').value;
     roomID = document.getElementById('join-code').value;
-    if(!name || !roomID) return alert("تکایە زانیارییەکان تەواو بکە");
+    if(!name || !roomID) return alert("زانیارییەکان تەواو بکە");
     db.ref(`rooms/${roomID}`).once('value', snap => {
-        if(!snap.exists()) return alert("ژوورەکە بوونی نییە!");
+        if(!snap.exists()) return alert("ژوورەکە نییە!");
         db.ref(`rooms/${roomID}/players`).push({ name: name, votes: 0 }).then(ref => {
             myKey = ref.key;
             document.getElementById('display-room-id').innerText = roomID;
@@ -73,7 +71,6 @@ function startGame() {
     const cat = document.getElementById('inp-cat').value;
     const timeVal = parseInt(document.getElementById('inp-time').value) || 3;
     const impCount = parseInt(document.getElementById('inp-imps').value) || 1;
-    
     const pool = dictionary[cat];
     const word = pool[Math.floor(Math.random() * pool.length)];
 
@@ -81,7 +78,6 @@ function startGame() {
         const keys = Object.keys(snap.val());
         let shuffled = keys.sort(() => 0.5 - Math.random());
         let selectedImps = shuffled.slice(0, Math.min(impCount, keys.length - 1 || 1));
-        
         db.ref(`rooms/${roomID}`).update({
             status: 'active', word: word, category: cat, imposters: selectedImps, time: timeVal * 60
         });
@@ -110,8 +106,7 @@ function runGame() {
 }
 
 function startTimer(sec) {
-    let t = sec;
-    clearInterval(timerInterval);
+    let t = sec; clearInterval(timerInterval);
     timerInterval = setInterval(() => {
         let m = Math.floor(t/60), s = t%60;
         document.getElementById('game-timer').innerText = `${m}:${s<10?'0':''}${s}`;
@@ -132,7 +127,7 @@ function runVoting() {
             btn.innerHTML = `👤 ${players[k].name}`;
             btn.onclick = () => {
                 document.querySelectorAll('#voting-list button').forEach(b => b.disabled = true);
-                btn.style.background = "var(--primary)";
+                btn.style.background = "var(--primary)"; btn.style.color = "#000";
                 db.ref(`rooms/${roomID}/players/${k}/votes`).transaction(v => (v || 0) + 1);
             };
             list.appendChild(btn);
