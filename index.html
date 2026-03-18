@@ -22,8 +22,8 @@
             <p>کۆدی ژوور</p>
             <div class="room-code" id="display-room-id">----</div>
             <div class="settings-grid">
-                <input type="number" id="inp-time" value="3" placeholder="کات">
-                <input type="number" id="inp-imps" value="1" placeholder="ساختەکار">
+                <input type="number" id="inp-time" value="3" title="Minutes">
+                <input type="number" id="inp-imps" value="1" title="Imposters">
             </div>
             <select id="inp-cat">
                 <option value="هەمەجۆر">🌍 هەموو بابەتەکان</option>
@@ -47,13 +47,20 @@
             <div class="timer" id="game-timer">00:00</div>
             <div id="role-box" class="word-box">...</div>
             <p id="cat-hint" class="hint-text"></p>
-            <button id="host-stop-btn" class="danger-btn" style="display:none;" onclick="updateStatus('results')">کۆتایی یاری</button>
+            <button id="host-stop-btn" class="danger-btn" style="display:none;" onclick="updateStatus('voting')">کۆتایی و دەنگدان</button>
+        </div>
+
+        <div id="screen-voting" class="screen">
+            <h2>کێ ساختەکارە؟ 🧐</h2>
+            <p style="font-size: 12px; margin-bottom: 15px;">کلیک لەسەر ئەو کەسە بکە کە گومانت لێیەتی</p>
+            <div id="voting-list" class="voting-grid"></div>
         </div>
 
         <div id="screen-results" class="screen">
             <h2 class="result-title">ئەنجامەکان</h2>
             <div id="imposter-reveal" class="reveal-box"></div>
-            <button id="host-replay-btn" class="main-btn" style="display:none;" onclick="replayGame()">دووبارە یاری 🔄</button>
+            <div id="vote-summary" style="margin-top: 15px; font-size: 14px;"></div>
+            <button id="host-replay-btn" class="main-btn" style="display:none; margin-top: 20px;" onclick="replayGame()">دووبارە یاری 🔄</button>
         </div>
     </div>
 
