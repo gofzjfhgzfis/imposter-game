@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IMPOSTER PRO - BY YUSUF</title>
+    <title>IMPOSTER PRO | Developed by Yusuf</title>
     
     <link rel="stylesheet" href="style.css">
     
@@ -12,54 +12,53 @@
 </head>
 <body>
 
-<div class="glass-card">
-    <div id="screen-lobby">
-        <h1>IMPOSTER</h1>
-        <span class="dev-badge">Developed by Yusuf</span>
-        <button onclick="initHost()">دروستکردنی ژوور</button>
-        <button class="btn-secondary" onclick="showScreen('screen-join')">جۆین بوون</button>
-    </div>
-
-    <div id="screen-host" style="display:none;">
-        <p>کۆدی ژوور</p>
-        <div class="room-code" id="display-room-id">----</div>
-        <div class="settings-grid">
-            <input type="number" id="inp-time" value="3" title="کات">
-            <input type="number" id="inp-imps" value="1" title="ساختەکار">
+    <div class="glass-card">
+        <div id="screen-lobby">
+            <h1>IMPOSTER</h1>
+            <span class="dev-badge">Developed by Yusuf</span>
+            <button onclick="initHost()">دروستکردنی ژوور</button>
+            <button class="btn-secondary" onclick="showScreen('screen-join')">جۆین بوون</button>
         </div>
-        <select id="inp-cat">
-            <option value="هەمەجۆر">🌍 هەموو بابەتەکان</option>
-            <option value="فیلم">🎬 سینەما</option>
-            <option value="تەکنەلۆژیا">💻 تەکنەلۆژیا</option>
-            <option value="گەردوون">🚀 گەردوون</option>
-        </select>
-        <div id="player-list"></div>
-        <button id="btn-start" style="display:none;" onclick="startGame()">دەستپێکردنی یاری 🚀</button>
+
+        <div id="screen-host" style="display:none;">
+            <p>کۆدی ژوور</p>
+            <div class="room-code" id="display-room-id">----</div>
+            <div class="settings-grid">
+                <input type="number" id="inp-time" value="3" placeholder="کات">
+                <input type="number" id="inp-imps" value="1" placeholder="ساختەکار">
+            </div>
+            <select id="inp-cat">
+                <option value="هەمەجۆر">🌍 هەموو بابەتەکان</option>
+                <option value="فیلم">🎬 سینەما</option>
+                <option value="تەکنەلۆژیا">💻 تەکنەلۆژیا</option>
+                <option value="گەردوون">🚀 گەردوون</option>
+            </select>
+            <div id="player-list"></div>
+            <button id="btn-start" style="display:none;" onclick="startGame()">دەستپێکردنی یاری 🚀</button>
+        </div>
+
+        <div id="screen-join" style="display:none;">
+            <h2>جۆین بوون</h2>
+            <input type="text" id="join-name" placeholder="ناوی تۆ">
+            <input type="number" id="join-code" placeholder="کۆدی ژوور">
+            <button onclick="joinRoom()">چوونە ناو یاری</button>
+            <button class="btn-ghost" onclick="showScreen('screen-lobby')">گەڕانەوە</button>
+        </div>
+
+        <div id="screen-game" style="display:none;">
+            <div class="timer" id="game-timer">00:00</div>
+            <div id="role-box" class="word-box">...</div>
+            <p id="cat-hint"></p>
+            <button id="host-stop-btn" class="btn-danger" style="display:none;" onclick="updateStatus('results')">کۆتایی یاری</button>
+        </div>
+
+        <div id="screen-results" style="display:none;">
+            <h2>ئەنجامەکان</h2>
+            <div id="imposter-reveal" class="word-box danger-box"></div>
+            <button id="host-replay-btn" style="display:none;" onclick="replayGame()">دووبارە یاری 🔄</button>
+        </div>
     </div>
 
-    <div id="screen-join" style="display:none;">
-        <h2>جۆین بوون</h2>
-        <input type="text" id="join-name" placeholder="ناوی تۆ">
-        <input type="number" id="join-code" placeholder="کۆدی ژوور">
-        <button onclick="joinRoom()">چوونە ناو یاری</button>
-        <button class="btn-ghost" onclick="showScreen('screen-lobby')">گەڕانەوە</button>
-    </div>
-
-    <div id="screen-game" style="display:none;">
-        <div class="timer" id="game-timer">00:00</div>
-        <div id="role-box" class="word-box">...</div>
-        <p id="cat-hint"></p>
-        <button id="host-stop-btn" class="btn-danger" style="display:none;" onclick="updateStatus('voting')">کۆتایی و دەنگدان</button>
-    </div>
-
-    <div id="screen-results" style="display:none;">
-        <h2 id="result-title">ئەنجامەکان</h2>
-        <div id="vote-summary"></div>
-        <div id="imposter-reveal" class="word-box danger-box"></div>
-        <button id="host-replay-btn" style="display:none;" onclick="replayGame()">دووبارە یاری بکەرەوە 🔄</button>
-    </div>
-</div>
-
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
