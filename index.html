@@ -3,84 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ساختەکار - Fixed Edition</title>
+    <title>IMPOSTER PRO - BY YUSUF</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <style>
-        :root { --primary: #00ff88; --danger: #ff4757; --bg: #0a0a0a; --glass: rgba(255, 255, 255, 0.05); }
-        * { box-sizing: border-box; margin: 0; padding: 0; transition: all 0.2s ease; }
-        body { font-family: 'Tahoma', sans-serif; background: var(--bg); color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .main-container { width: 100%; max-width: 450px; }
-        .app-card { background: var(--glass); backdrop-filter: blur(20px); border: 2px solid rgba(255,255,255,0.1); border-radius: 30px; padding: 30px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-        h1 { font-size: 28px; margin-bottom: 20px; font-weight: 900; color: var(--primary); }
-        input, select { width: 100%; padding: 15px; margin: 10px 0; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); color: #fff; text-align: center; font-size: 16px; }
-        button { width: 100%; padding: 16px; margin: 10px 0; border-radius: 15px; border: none; font-weight: bold; font-size: 17px; cursor: pointer; background: #fff; color: #000; }
-        button:hover { transform: scale(1.02); }
-        .btn-primary { background: var(--primary); }
-        .room-id-display { font-size: 40px; font-weight: 900; color: var(--primary); letter-spacing: 5px; margin: 15px 0; }
-        .player-tag { background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 20px; margin: 5px; display: inline-block; font-size: 14px; }
-        .timer { font-size: 50px; font-weight: 900; color: #f1c40f; margin: 15px 0; }
-        .reveal-box { background: #fff; color: #000; padding: 30px; border-radius: 20px; margin: 20px 0; font-size: 26px; font-weight: 900; }
+        :root {
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --accent: #f093fb;
+            --danger: #ff4b2b;
+            --glass: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+
+        body {
+            min-height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            background: linear-gradient(45deg, #0f2027, #203a43, #2c5364);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: white; overflow-x: hidden; padding: 20px;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 35px;
+            padding: 40px;
+            width: 100%; max-width: 450px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        h1 { font-size: 35px; font-weight: 900; letter-spacing: -1px; margin-bottom: 5px; 
+             background: linear-gradient(to right, #00f2fe, #f093fb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .dev-badge { font-size: 12px; font-weight: bold; opacity: 0.8; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px; display: block; color: var(--primary); }
+
+        input, select {
+            width: 100%; padding: 15px; margin: 10px 0; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.2); color: white; font-size: 16px; outline: none; text-align: center;
+        }
+
+        button {
+            width: 100%; padding: 16px; margin: 12px 0; border-radius: 18px; border: none;
+            font-weight: 800; font-size: 18px; cursor: pointer; transition: 0.3s;
+            background: linear-gradient(135deg, var(--secondary), var(--primary)); color: white;
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+
+        button:hover { transform: translateY(-3px); box-shadow: 0 15px 25px rgba(79, 172, 254, 0.4); }
+        button:active { transform: scale(0.97); }
+
+        .room-code { font-size: 45px; font-weight: 900; color: #fff; margin: 15px 0; text-shadow: 0 0 15px var(--primary); }
+        
+        .timer { font-size: 55px; font-weight: 900; color: #f1c40f; margin: 15px 0; }
+        
+        .word-box { background: #fff; color: #000; padding: 30px; border-radius: 25px; margin: 20px 0; font-size: 28px; font-weight: 900; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+
+        .footer-tag { margin-top: 30px; font-size: 11px; opacity: 0.5; font-style: italic; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="main-container">
-    <div class="app-card" id="screen-lobby">
-        <h1>ساختەکار کێیە؟</h1>
-        <button class="btn-primary" onclick="initHost()">دروستکردنی ژوور</button>
-        <button onclick="showScreen('screen-join')">جۆین بوون</button>
+<div class="glass-card">
+    <div id="screen-lobby">
+        <h1>IMPOSTER</h1>
+        <span class="dev-badge">Developed by Yusuf</span>
+        <button onclick="initHost()">دروستکردنی ژوور</button>
+        <button style="background: rgba(255,255,255,0.1);" onclick="showScreen('screen-join')">جۆین بوون</button>
     </div>
 
-    <div class="app-card" id="screen-host" style="display:none;">
+    <div id="screen-host" style="display:none;">
         <p>کۆدی ژوور</p>
-        <div class="room-id-display" id="display-room-id">----</div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <input type="number" id="inp-time" value="3" placeholder="خولەک">
-            <input type="number" id="inp-imps" value="1" placeholder="ساختەکار">
+        <div class="room-code" id="display-room-id">----</div>
+        <div style="display:flex; gap:10px;">
+            <input type="number" id="inp-time" value="3" title="کاتی یاری">
+            <input type="number" id="inp-imps" value="1" title="ژمارەی ساختەکار">
         </div>
         <select id="inp-cat">
-            <option value="گشتی">🌍 گشتی</option>
-            <option value="فیلم">🎬 سینەما</option>
-            <option value="خواردن">🍔 خواردن</option>
-            <option value="تەکنەلۆژیا">💻 تەکنەلۆژیا</option>
+            <option value="هەمەجۆر">🌍 هەموو کەتەگۆرییەکان</option>
+            <option value="پیشە">👨‍🔧 پیشە و کار</option>
+            <option value="گەردوون">🚀 گەردوون و ئەستێرە</option>
+            <option value="براند">🍎 براند و کۆمپانیا</option>
+            <option value="فیلم">🎬 فیلم و زنجیرە</option>
+            <option value="یاری">🎮 یارییە ڤیدیۆییەکان</option>
+            <option value="وڵات">🏳️ وڵاتانی جیهان</option>
+            <option value="تەکنەلۆژیا">💻 ئامێری تەکنەلۆژی</option>
         </select>
-        <div id="host-player-list" style="margin: 20px 0;"></div>
-        <button class="btn-primary" id="btn-start" style="display:none;" onclick="startGame()">دەستپێکردن 🚀</button>
+        <div id="player-list" style="margin: 15px 0; font-size: 14px; opacity: 0.8;"></div>
+        <button id="btn-start" style="display:none;" onclick="startGame()">دەستپێکردنی گەورە 🚀</button>
+        <div class="footer-tag">Project ID: yousif-eda79</div>
     </div>
 
-    <div class="app-card" id="screen-join" style="display:none;">
+    <div id="screen-join" style="display:none;">
         <h2>جۆین بوون</h2>
-        <input type="text" id="join-name" placeholder="ناوەکەت">
+        <input type="text" id="join-name" placeholder="ناوی تۆ">
         <input type="number" id="join-code" placeholder="کۆدی ژوور">
-        <button class="btn-primary" onclick="joinRoom()">چوونە ژوورەوە</button>
-        <button onclick="showScreen('screen-lobby')">گەڕانەوە</button>
+        <button onclick="joinRoom()">چوونە ناو یاری</button>
+        <button style="background:none; box-shadow:none;" onclick="showScreen('screen-lobby')">پاشگەزبوونەوە</button>
     </div>
 
-    <div class="app-card" id="screen-game" style="display:none;">
+    <div id="screen-game" style="display:none;">
         <div class="timer" id="game-timer">00:00</div>
-        <div id="role-box" class="reveal-box">...</div>
-        <p id="cat-hint" style="opacity: 0.6; margin-bottom: 15px;"></p>
-        <button id="host-stop-btn" style="display:none; background: var(--danger); color:#fff;" onclick="updateStatus('voting')">کۆتایی و دەنگدان 🗳️</button>
+        <div id="role-box" class="word-box">...</div>
+        <p id="cat-hint" style="color: var(--primary); font-weight: bold;"></p>
+        <button id="host-stop-btn" style="display:none; background: var(--danger);" onclick="updateStatus('voting')">کۆتایی و دەنگدان</button>
     </div>
 
-    <div class="app-card" id="screen-voting" style="display:none;">
-        <h2>دەنگ بدە!</h2>
-        <div id="vote-btns-container" style="margin-top: 20px;"></div>
-        <button id="host-result-btn" style="display:none; background: var(--primary); margin-top: 20px;" onclick="updateStatus('results')">بینینی ئەنجام 📊</button>
-    </div>
-
-    <div class="app-card" id="screen-results" style="display:none;">
-        <h2>ئەنجامەکان</h2>
-        <div id="vote-summary" style="margin: 20px 0; text-align: right;"></div>
-        <div id="imposter-reveal" class="reveal-box" style="background: var(--danger); color: #fff;"></div>
-        <button id="host-replay-btn" style="display:none; background: var(--primary);" onclick="replayGame()">دووبارە یاری بکەرەوە 🔄</button>
+    <div id="screen-results" style="display:none;">
+        <h2 id="result-title">ئەنجامەکان</h2>
+        <div id="vote-summary" style="margin: 20px 0; line-height: 1.8;"></div>
+        <div id="imposter-reveal" class="word-box" style="background: var(--danger); color: #fff;"></div>
+        <button id="host-replay-btn" style="display:none;" onclick="replayGame()">دووبارە یاری بکەرەوە 🔄</button>
+        <div class="footer-tag">Yusuf Developer Edition v2.0</div>
     </div>
 </div>
 
 <script>
+    // --- Firebase & Dictionary ---
     const firebaseConfig = {
         apiKey: "AIzaSyCGX5s8Z8m-DhMXDRVmF0F6Yje_p7A",
         authDomain: "yousif-eda79.firebaseapp.com",
@@ -90,21 +147,28 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let roomID, myName, isHost = false, timer;
-    const wordsPool = {
-        "گشتی": ["قوتابخانە", "پارک", "ماڵ", "سەعات", "کتێب", "پێنووس"],
-        "فیلم": ["ئینتەرستێلار", "ئینسیپشن", "سێڤن", "تایتانیک", "جۆکەر"],
-        "تەکنەلۆژیا": ["کۆمپیوتەر", "ئایفۆن", "فایەربەیس", "ڕۆبۆت", "ئینتەرنێت"],
-        "خواردن": ["پیتزا", "کەباب", "دۆڵمە", "برنج", "ماسی"]
+    const dictionary = {
+        "پیشە": ["پڕۆگرامەر", "فڕۆکەوان", "دکتۆری ددان", "دادوەر", "نانەوا", "ئەندازیار", "وێنەگر", "کەشتیوان"],
+        "گەردوون": ["مانگ", "مەریخ", "خۆر", "کونە ڕەشەکان", "زوحەل", "نەیزەک", "کۆمەڵەی خۆر", "گاڵاکسی"],
+        "براند": ["ئەپڵ", "سامسۆنگ", "تێسلا", "نیکی", "رۆڵێکس", "سۆنی", "تۆیۆتا", "مێرسیدس", "گوگڵ"],
+        "فیلم": ["ئینتەرستێلار", "باتمان", "سپایدەرمان", "تایتانیک", "هاری پۆتەر", "جۆکەر", "پاپۆڕی شکاو"],
+        "یاری": ["پەبجی", "ماینکرافت", "کۆڵ ئۆف دیووتی", "فیفا", "جی تی ئەی", "فۆرتنایت", "ڕۆبلۆکس"],
+        "وڵات": ["کوردستان", "بەڕازیل", "ژاپۆن", "ئیتاڵیا", "فەڕەنسا", "میسر", "کەنەدا", "ئەڵمانیا"],
+        "تەکنەلۆژیا": ["لابتۆپ", "ئایفۆن", "پەیجەر", "درۆن", "ڕۆبۆت", "ساعتە زیرەک", "بیستۆک", "VR"],
+        "هەمەجۆر": ["ماسی", "کتێبخانە", "پرد", "سەعات", "فڕۆکەخانە", "چیا", "دارستان", "مۆزەخانە"]
     };
 
+    let roomID, myName, isHost = false, timer;
+
+    // --- Utility ---
     function showScreen(id) {
-        document.querySelectorAll('.app-card').forEach(s => s.style.display = 'none');
+        document.querySelectorAll('.glass-card > div').forEach(div => div.style.display = 'none');
         document.getElementById(id).style.display = 'block';
     }
 
     function updateStatus(s) { db.ref(`rooms/${roomID}/status`).set(s); }
 
+    // --- Host ---
     function initHost() {
         isHost = true;
         roomID = Math.floor(1000 + Math.random() * 9000).toString();
@@ -118,46 +182,17 @@
     function listenToPlayers() {
         db.ref(`rooms/${roomID}/players`).on('value', snap => {
             const players = snap.val() || {};
-            const list = Object.values(players).map(p => `<span class="player-tag">👤 ${p.name}</span>`).join("");
-            document.getElementById('host-player-list').innerHTML = list;
-            if(isHost) document.getElementById('btn-start').style.display = Object.keys(players).length >= 3 ? 'block' : 'none';
-        });
-    }
-
-    function joinRoom() {
-        myName = document.getElementById('join-name').value.trim();
-        roomID = document.getElementById('join-code').value.trim();
-        if(!myName || !roomID) return alert("تکایە ناو و کۆد بنووسە");
-
-        // پشکنین: ئایا ژوورەکە هەیە و یاری دەستی پێکردووە؟
-        db.ref(`rooms/${roomID}`).once('value', snap => {
-            const data = snap.val();
-            if(!data) return alert("ئەم ژوورە بوونی نییە!");
-            if(data.status !== 'waiting') return alert("ببورە، یارییەکە دەستی پێکردووە و ناتوانیت جۆین ببی!");
-
-            // ئەگەر کێشە نەبوو، جۆین دەبێت
-            db.ref(`rooms/${roomID}/players`).push({ name: myName });
-            showScreen('screen-host');
-            document.getElementById('screen-host').innerHTML = `<h1>بەخێرهاتی ${myName}</h1><p>کۆدی ژوور: ${roomID}</p><p>چاوەڕێی Host بکە تا دەست پێ دەکات...</p>`;
-            listenToStatus();
-        });
-    }
-
-    function listenToStatus() {
-        db.ref(`rooms/${roomID}/status`).on('value', snap => {
-            const s = snap.val();
-            if(s === 'active') runGame();
-            if(s === 'voting') runVote();
-            if(s === 'results') runResults();
-            if(s === 'waiting' && !isHost && document.getElementById('screen-results').style.display === 'block') {
-                location.reload(); // یاریزانەکان ڕیسێت دەبنەوە بۆ لۆبی
-            }
+            const count = Object.keys(players).length;
+            document.getElementById('player-list').innerHTML = `یاریزانەکان (${count}): ` + 
+                Object.values(players).map(p => `<b>${p.name}</b>`).join(" - ");
+            if(isHost) document.getElementById('btn-start').style.display = count >= 3 ? 'block' : 'none';
         });
     }
 
     function startGame() {
         const cat = document.getElementById('inp-cat').value;
-        const word = wordsPool[cat][Math.floor(Math.random() * wordsPool[cat].length)];
+        const pool = cat === "هەمەجۆر" ? [].concat(...Object.values(dictionary)) : dictionary[cat];
+        const word = pool[Math.floor(Math.random() * pool.length)];
         const time = parseInt(document.getElementById('inp-time').value) * 60;
         const impCount = parseInt(document.getElementById('inp-imps').value);
 
@@ -170,6 +205,34 @@
         });
     }
 
+    // --- Join ---
+    function joinRoom() {
+        myName = document.getElementById('join-name').value.trim();
+        roomID = document.getElementById('join-code').value.trim();
+        if(!myName || !roomID) return alert("ناو و کۆد بنووسە!");
+
+        db.ref(`rooms/${roomID}`).once('value', snap => {
+            const data = snap.val();
+            if(!data) return alert("ژوورەکە نییە!");
+            if(data.status !== 'waiting') return alert("یاری دەستی پێکردووە!");
+
+            db.ref(`rooms/${roomID}/players`).push({ name: myName });
+            showScreen('screen-host');
+            document.getElementById('screen-host').innerHTML = `<h2>بەخێرهاتی ${myName}</h2><p>چاوەڕێی دەستپێکردنی یوسف بکە...</p>`;
+            listenToStatus();
+        });
+    }
+
+    // --- Game Logic ---
+    function listenToStatus() {
+        db.ref(`rooms/${roomID}/status`).on('value', snap => {
+            const s = snap.val();
+            if(s === 'active') runGame();
+            if(s === 'voting' || s === 'results') runResults(s);
+            if(s === 'waiting' && !isHost && document.getElementById('screen-results').style.display === 'block') location.reload();
+        });
+    }
+
     function runGame() {
         showScreen('screen-game');
         if(isHost) document.getElementById('host-stop-btn').style.display = 'block';
@@ -178,7 +241,7 @@
             const myKey = Object.keys(d.players).find(k => d.players[k].name === myName || (isHost && !myName));
             const isImp = d.imposters.includes(myKey);
             document.getElementById('role-box').innerText = isImp ? "تۆ ساختەکاریت! 🤫" : d.word;
-            document.getElementById('role-box').style.color = isImp ? "var(--danger)" : "var(--primary)";
+            document.getElementById('role-box').style.color = isImp ? "var(--danger)" : "#2ecc71";
             document.getElementById('cat-hint').innerText = "بابەت: " + d.category;
             startTimer(d.duration);
         });
@@ -194,36 +257,30 @@
         }, 1000);
     }
 
-    function runVote() {
+    function runResults(s) {
         clearInterval(timer);
-        showScreen('screen-voting');
-        if(isHost) document.getElementById('host-result-btn').style.display = 'block';
-        db.ref(`rooms/${roomID}/players`).once('value', snap => {
-            const p = snap.val();
-            let h = "";
-            for(let k in p) if(p[k].name !== myName) h += `<button onclick="submitVote('${p[k].name}')">دەنگ بۆ ${p[k].name}</button>`;
-            document.getElementById('vote-btns-container').innerHTML = h;
+        showScreen('screen-results');
+        if(isHost) document.getElementById('host-replay-btn').style.display = 'block';
+        
+        db.ref(`rooms/${roomID}`).once('value', snap => {
+            const d = snap.val();
+            if(s === 'voting') {
+                document.getElementById('result-title').innerText = "کاتی دەنگدانە! 🗳️";
+                let h = "";
+                for(let k in d.players) if(d.players[k].name !== myName) h += `<button onclick="submitVote('${d.players[k].name}')">دەنگ بۆ ${d.players[k].name}</button>`;
+                document.getElementById('vote-summary').innerHTML = h;
+            } else {
+                document.getElementById('result-title').innerText = "ئەنجامەکان 📊";
+                const imps = d.imposters.map(k => d.players[k].name).join(" و ");
+                document.getElementById('imposter-reveal').innerText = "ساختەکار: " + imps;
+                document.getElementById('vote-summary').innerHTML = "<p>یاری کۆتایی هات</p>";
+            }
         });
     }
 
     function submitVote(n) {
         db.ref(`rooms/${roomID}/votes/${myName || 'Host'}`).set(n);
-        document.getElementById('vote-btns-container').innerHTML = "<h3>✓ دەنگەکەت تۆمار کرا</h3>";
-    }
-
-    function runResults() {
-        showScreen('screen-results');
-        if(isHost) document.getElementById('host-replay-btn').style.display = 'block';
-        db.ref(`rooms/${roomID}`).once('value', snap => {
-            const d = snap.val();
-            const v = d.votes || {}, tally = {};
-            for(let x in v) tally[v[x]] = (tally[v[x]] || 0) + 1;
-            let h = "<ul>";
-            for(let n in tally) h += `<li>${n}: <b>${tally[n]} دەنگ</b></li>`;
-            document.getElementById('vote-summary').innerHTML = h + "</ul>";
-            const imps = d.imposters.map(k => d.players[k].name).join(" و ");
-            document.getElementById('imposter-reveal').innerText = "ساختەکار: " + imps;
-        });
+        document.getElementById('vote-summary').innerHTML = "<h3>✓ دەنگەکەت تۆمار کرا</h3>";
     }
 
     function replayGame() {
