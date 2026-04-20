@@ -2,7 +2,7 @@
 <html lang="ku" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Imposter Game</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
@@ -10,16 +10,21 @@
 </head>
 <body>
     <div id="app">
-        <div id="main-screen" class="screen active">
+        <div id="start-screen" class="screen active">
             <h1 class="logo-text">IMPOSTER</h1>
             <div class="dev-tag">گەشەپێدراوە لەلایەن یوسف</div>
-            
+            <button onclick="showMode('create')" class="btn-cyan">دروستکردنی ژوور</button>
+            <button onclick="showMode('join')" class="btn-cyan" style="background: #4a5568; color: white;">جۆین بوون</button>
+        </div>
+
+        <div id="auth-screen" class="screen">
+            <h2 id="mode-title"></h2>
             <input type="text" id="playerName" placeholder="ناوت بنووسە...">
-            
-            <button onclick="createRoom()" class="btn-cyan">دروستکردنی ژوور</button>
-            
-            <input type="number" id="roomCodeInput" placeholder="کۆدی ژوور...">
-            <button onclick="joinRoom()" class="btn-cyan">جۆین بوون</button>
+            <div id="join-inputs" style="display: none;">
+                <input type="number" id="roomCodeInput" placeholder="کۆدی ژوور...">
+            </div>
+            <button id="action-btn" onclick="handleAction()" class="btn-cyan">بەردەوام بوون</button>
+            <button onclick="showScreen('start-screen')" class="btn-back">گەڕانەوە</button>
         </div>
 
         <div id="waiting-screen" class="screen">
