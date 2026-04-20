@@ -2,7 +2,7 @@
 <html lang="ku" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Imposter Game</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
@@ -13,43 +13,36 @@
         <div id="start-screen" class="screen active">
             <h1 class="logo-text">IMPOSTER</h1>
             <div class="dev-tag">گەشەپێدراوە لەلایەن یوسف</div>
-            <div class="menu-options">
-                <button onclick="showMode('create')" class="btn-main create">دروستکردنی ژوور</button>
-                <button onclick="showMode('join')" class="btn-main join">جۆین بوون</button>
-            </div>
+            <button onclick="showMode('create')" class="btn-main create">دروستکردنی ژوور</button>
+            <button onclick="showMode('join')" class="btn-main join">جۆین بوون</button>
         </div>
 
         <div id="auth-screen" class="screen">
-            <h2 id="mode-title" class="title"></h2>
-            <div class="input-group">
-                <input type="text" id="playerName" placeholder="ناوت بنووسە...">
-                <input type="number" id="roomCodeInput" placeholder="کۆدی ژوور..." style="display: none;">
-            </div>
-            <button id="action-btn" onclick="handleAction()" class="btn-primary">دەستپێکردن</button>
-            <button onclick="showScreen('start-screen')" class="btn-back">گەڕانەوە بۆ دواوە</button>
+            <h2 id="mode-title"></h2>
+            <input type="text" id="playerName" placeholder="ناوت بنووسە..." autocomplete="off">
+            <input type="number" id="roomCodeInput" placeholder="کۆدی ژوور..." style="display: none;">
+            <button onclick="handleAction()" class="btn-primary">بەردەوام بوون</button>
+            <button onclick="showScreen('start-screen')" class="btn-back">گەڕانەوە</button>
         </div>
 
         <div id="waiting-screen" class="screen">
-            <div class="room-info">
-                <span>کۆدی ژوور:</span>
-                <h2 id="displayRoomCode"></h2>
-            </div>
-            <div class="player-count">یاریزانەکان: <span id="count">0</span></div>
-            <ul id="playersList" class="p-list"></ul>
+            <h2 class="lobby-title">کۆدی ژوور: <span id="displayRoomCode"></span></h2>
+            <ul id="playersList"></ul>
             <div id="hostControls" style="display: none;">
                 <button onclick="startGame()" class="btn-start">دەستپێکردنی یاری</button>
             </div>
+            <button onclick="leaveRoom()" class="btn-leave">چوونە دەرەوە</button>
         </div>
 
         <div id="game-screen" class="screen">
             <div class="game-card">
-                <div id="categoryLabel" class="category-badge">کەتەگۆری: ...</div>
-                <div id="roleDisplay" class="role-text">وشەکە لێرە دەردەکەوێت</div>
+                <div id="categoryLabel" class="category-badge"></div>
+                <div id="roleDisplay" class="role-text"></div>
             </div>
             <div id="hostReplay" style="display: none;">
                 <button onclick="playAgain()" class="btn-primary">دووبارە یاریکردنەوە</button>
             </div>
-            <button onclick="leaveRoom()" class="btn-leave">چوونە دەرەوە</button>
+            <button onclick="leaveRoom()" class="btn-leave">کۆتایی یاری</button>
         </div>
     </div>
     <script src="script.js"></script>
