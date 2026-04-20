@@ -1,11 +1,11 @@
 /**
- * IMPOSTER PRO - GAME ENGINE
- * Developed by Yusuf - CS Student
+ * IMPOSTER ULTRA - STABLE VERSION
+ * Optimized by Yusuf's Assistant
  */
 
-// 1. Config & Initialization
+// 1. Configuration
 const firebaseConfig = {
-    apiKey: "AIzaSy...", 
+    apiKey: "AIzaSy...", // كلیلەكەی خۆت
     authDomain: "yousif-eda79.firebaseapp.com",
     databaseURL: "https://yousif-eda79-default-rtdb.firebaseio.com",
     projectId: "yousif-eda79",
@@ -16,161 +16,127 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// State Management
-let state = {
-    user: { name: "", role: "viewer", isHost: false },
-    room: { id: "", status: "waiting", players: {} },
-    game: { timer: 60, active: false }
+// 2. App State
+let user = { name: "", room: "", isHost: false, mode: "" };
+
+const words = {
+    "خواردن": ["پیتزا", "کەباب", "شۆربا"],
+    "تەکنەلۆژیا": ["ئایفۆن", "لابتۆپ", "ئینتەرنێت"],
+    "ئاژەڵ": ["شێر", "پشیلە", "فیل"]
 };
 
-// 2. Dictionary (Large Dataset)
-const dictionary = {
-    "خواردن": ["پیتزا", "هەمبەرگر", "یاپراخ", "کەباب", "مریشک", "ماسی", "دۆلمە"],
-    "وڵات": ["کوردستان", "ئەڵمانیا", "فەڕەنسا", "ژاپۆن", "ئیتاڵیا", "بەڕازیل"],
-    "وەرزش": ["تۆپی پێ", "تێنس", "مەلەوانی", "باسکە", "کاراتی", "گۆڵف"],
-    "فیلم": ["باتمان", "سپایدەرمان", "تایتانیک", "جۆکەر", "ئینتەرستێلار"]
-};
-
-// 3. Navigation System
-function navigate(screenId, mode = null) {
+// 3. Robust Navigation Function
+function go(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(`${screenId}-screen`).classList.add('active');
-    
-    if (mode === 'create') {
-        document.getElementById('setup-title').innerText = "دروستکردنی ژوور";
-        document.getElementById('code-input-wrapper').style.display = 'none';
-        state.user.isHost = true;
-    } else if (mode === 'join') {
-        document.getElementById('setup-title').innerText = "جۆین بوون";
-        document.getElementById('code-input-wrapper').style.display = 'block';
-        state.user.isHost = false;
-    }
+    const target = document.getElementById(`sc-${screenId}`);
+    if (target) target.classList.add('active');
 }
 
-// 4. Session Initiation & Fix for Joining Issues
-async function initSession() {
-    const nameInput = document.getElementById('p-name').value.trim();
-    if (!nameInput) return alert("ناوەکەت بنووسە!");
-    state.user.name = nameInput;
+// 4. Centralized Button Controller (چارەسەری ئیش نەکردنی دوگمەکان)
+document.addEventListener('click', (e) => {
+    const id = e.target.id;
 
-    if (state.user.isHost) {
-        state.room.id = Math.floor(1000 + Math.random() * 9000).toString();
-        await createRoomOnDB();
+    if (id === 'btn-create') { user.mode = 'create'; document.getElementById('in-code').style.display = 'none'; go('auth'); }
+    if (id === 'btn-join') { user.mode = 'join'; document.getElementById('in-code').style.display = 'block'; go('auth'); }
+    if (id === 'btn-back') { go('home'); }
+    if (id === 'btn-go') { handleAuth(); }
+    if (id === 'btn-start') { launchGame(); }
+    if (id === 'btn-leave' || id === 'btn-quit') { leaveRoom(); }
+    if (id === 'btn-reset') { db.ref(`rooms/${user.room}`).update({ status: 'waiting' }); }
+    if (e.target.classList.contains('kick-btn')) { kickPlayer(e.target.dataset.name); }
+    if (e.target.closest('#role-card')) { document.querySelector('.card-inner').classList.toggle('flipped'); }
+});
+
+// 5. Core Logic
+async function handleAuth() {
+    user.name = document.getElementById('in-name').value.trim();
+    if (!user.name) return alert("ناوت بنووسە!");
+
+    if (user.mode === 'create') {
+        user.room = Math.floor(1000 + Math.random() * 9000).toString();
+        user.isHost = true;
+        await db.ref(`rooms/${user.room}`).set({
+            host: user.name, status: "waiting", players: { [user.name]: true }
+        });
+        startLobby();
     } else {
-        const codeInput = document.getElementById('r-code').value.trim();
-        if (!codeInput) return alert("کۆدی ژوورەکە بنووسە!");
-        state.room.id = codeInput;
-        await joinRoomOnDB();
+        user.room = document.getElementById('in-code').value.trim();
+        const snap = await db.ref(`rooms/${user.room}`).once('value');
+        if (snap.exists()) {
+            await db.ref(`rooms/${user.room}/players/${user.name}`).set(true);
+            startLobby();
+        } else alert("ژوورەکە نییە!");
     }
 }
 
-async function createRoomOnDB() {
-    const roomRef = db.ref(`rooms/${state.room.id}`);
-    await roomRef.set({
-        host: state.user.name,
-        status: "waiting",
-        createdAt: firebase.database.ServerValue.TIMESTAMP
-    });
-    
-    addPlayerWithPresence();
-}
+function startLobby() {
+    go('lobby');
+    document.getElementById('room-id').innerText = user.room;
+    document.getElementById('host-ui').style.display = user.isHost ? 'block' : 'none';
 
-async function joinRoomOnDB() {
-    const roomRef = db.ref(`rooms/${state.room.id}`);
-    const snapshot = await roomRef.once('value');
-    
-    if (!snapshot.exists()) return alert("ژوورەکە بوونی نییە!");
-    if (snapshot.val().status !== "waiting") return alert("یاری دەستی پێکردووە!");
-    
-    addPlayerWithPresence();
-}
+    // Presence & Sync
+    const roomRef = db.ref(`rooms/${user.room}`);
+    db.ref(`rooms/${user.room}/players/${user.name}`).onDisconnect().remove();
 
-// Presence Logic: This solves the "Join/Leave" problem
-function addPlayerWithPresence() {
-    const playerRef = db.ref(`rooms/${state.room.id}/players/${state.user.name}`);
-    
-    // کاتێک یاریزانەکە پەیوەندی بڕا، خۆکارانە لە داتابەیس دەسڕێتەوە
-    playerRef.onDisconnect().remove();
-    
-    playerRef.set(true).then(() => {
-        navigate('lobby');
-        document.getElementById('room-id-display').innerText = state.room.id;
-        syncRoomData();
-    });
-}
+    roomRef.on('value', snap => {
+        const data = snap.val();
+        if (!data) return;
 
-// 5. Real-time Synchronization
-function syncRoomData() {
-    const roomRef = db.ref(`rooms/${state.room.id}`);
-    
-    roomRef.on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (!data) return handleRoomClosed();
-
-        // Update UI Players List
-        const playersList = Object.keys(data.players || {});
-        renderPlayers(playersList, data.host);
-        
-        // Handle Transitions
-        if (data.status === "playing" && !state.game.active) {
-            startClientGame(data);
-        } else if (data.status === "waiting") {
-            resetToLobby();
+        // Check if I'm kicked
+        if (!data.players || !data.players[user.name]) {
+            roomRef.off();
+            alert("تۆ لە ژوورەکە دەرکرایت!");
+            location.reload();
+            return;
         }
+
+        // Render List
+        const pList = Object.keys(data.players);
+        document.getElementById('p-count').innerText = pList.length;
+        document.getElementById('p-list').innerHTML = pList.map(p => `
+            <div class="player-item">
+                <span>${p} ${p === data.host ? '👑' : ''}</span>
+                ${user.isHost && p !== user.name ? `<button class="kick-btn" data-name="${p}">دەرکردن</button>` : ''}
+            </div>
+        `).join('');
+
+        if (data.status === 'playing') renderGame(data.gameData);
+        if (data.status === 'waiting') { go('lobby'); document.querySelector('.card-inner').classList.remove('flipped'); }
     });
 }
 
-function renderPlayers(list, hostName) {
-    const container = document.getElementById('players-container');
-    container.innerHTML = list.map(p => `
-        <div class="player-bubble">
-            <span>${p} ${p === hostName ? '👑' : ''}</span>
-            ${state.user.isHost && p !== state.user.name ? `<button onclick="kick('${p}')">❌</button>` : ''}
-        </div>
-    `).join('');
-    
-    if (state.user.isHost) document.getElementById('host-zone').style.display = 'block';
-}
-
-// 6. Gameplay Logic
-function requestStart() {
-    const players = document.getElementById('players-container').children.length;
-    if (players < 3) return alert("بۆ دەستپێکردن لانی کەم ٣ کەس بن!");
-
-    const cats = Object.keys(dictionary);
+function launchGame() {
+    const cats = Object.keys(words);
     const cat = cats[Math.floor(Math.random() * cats.length)];
-    const word = dictionary[cat][Math.floor(Math.random() * dictionary[cat].length)];
+    const word = words[cat][Math.floor(Math.random() * words[cat].length)];
     
-    db.ref(`rooms/${state.room.id}/players`).once('value', snap => {
-        const pList = Object.keys(snap.val());
-        const imposter = pList[Math.floor(Math.random() * pList.length)];
+    db.ref(`rooms/${user.room}/players`).once('value', snap => {
+        const players = Object.keys(snap.val());
+        if (players.length < 3) return alert("لانی کەم ٣ یاریزان پێویستە!");
+        const imposter = players[Math.floor(Math.random() * players.length)];
         
-        db.ref(`rooms/${state.room.id}`).update({
+        db.ref(`rooms/${user.room}`).update({
             status: "playing",
             gameData: { cat, word, imposter }
         });
     });
 }
 
-function startClientGame(data) {
-    state.game.active = true;
-    navigate('game');
-    
-    const { cat, word, imposter } = data.gameData;
-    document.getElementById('cat-label').innerText = "کەتەگۆری: " + cat;
-    
-    if (state.user.name === imposter) {
-        document.getElementById('main-word').innerText = "تۆ ئیمپۆستەری!";
-        document.getElementById('main-word').style.color = "#ff4b2b";
-    } else {
-        document.getElementById('main-word').innerText = word;
-        document.getElementById('main-word').style.color = "#00f2fe";
-    }
+function renderGame(data) {
+    go('game');
+    document.getElementById('game-info').innerText = "کەتەگۆری: " + data.cat;
+    const isImp = user.name === data.imposter;
+    document.getElementById('word-txt').innerText = isImp ? "تۆ ساختەکاری!" : data.word;
+    document.getElementById('hint-txt').innerText = isImp ? "هەوڵ بدە ئاشکرا نەبیت" : "باسی وشەکە بکە";
+    if (user.isHost) document.getElementById('host-replay').style.display = 'block';
 }
 
-// Helpers
-function revealRole() { document.getElementById('card-inner').classList.toggle('flipped'); }
-function copyCode() { 
-    navigator.clipboard.writeText(state.room.id); 
-    alert("کۆدەکە کۆپی کرا!"); 
+function kickPlayer(name) {
+    db.ref(`rooms/${user.room}/players/${name}`).remove();
+}
+
+function leaveRoom() {
+    if (user.room) {
+        db.ref(`rooms/${user.room}/players/${user.name}`).remove().then(() => location.reload());
+    } else location.reload();
 }
