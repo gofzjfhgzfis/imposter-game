@@ -1,69 +1,107 @@
-body {
-    background: radial-gradient(circle, #1a202c 0%, #0a0c10 100%);
-    color: white;
-    font-family: sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    overflow: hidden;
+const firebaseConfig = {
+    apiKey: "لێرە کلیلەکە دابنێ",
+    authDomain: "yousif-eda79.firebaseapp.com",
+    databaseURL: "https://yousif-eda79-default-rtdb.firebaseio.com",
+    projectId: "yousif-eda79",
+    storageBucket: "yousif-eda79.appspot.com",
+    appId: "لێرە ئایدیەکە دابنێ"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let myName = "";
+let currentRoomCode = "";
+let isHost = false;
+
+// فەنکشنی دروستکردنی ژوور
+function createRoom() {
+    myName = document.getElementById('playerName').value.trim();
+    if (!myName) return alert("ناوت بنووسە");
+    
+    currentRoomCode = Math.floor(1000 + Math.random() * 9000).toString();
+    isHost = true;
+    
+    db.ref("rooms/" + currentRoomCode).set({
+        host: myName,
+        status: "waiting",
+        players: { [myName]: true }
+    }).then(() => {
+        enterLobby();
+    }).catch(err => alert("کێشەیەک هەیە: " + err.message));
 }
-#app {
-    background: rgba(255, 255, 255, 0.08);
-    padding: 40px;
-    border-radius: 25px;
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    text-align: center;
-    width: 320px;
+
+// فەنکشنی جۆین بوون
+function joinRoom() {
+    myName = document.getElementById('playerName').value.trim();
+    currentRoomCode = document.getElementById('roomCodeInput').value.trim();
+    
+    if (!myName || !currentRoomCode) return alert("زانیارییەکان پڕ بکەرەوە");
+    
+    db.ref("rooms/" + currentRoomCode).once("value", snapshot => {
+        if (snapshot.exists()) {
+            db.ref("rooms/" + currentRoomCode + "/players").update({ [myName]: true });
+            enterLobby();
+        } else {
+            alert("ئەم ژوورە نییە!");
+        }
+    });
 }
-.logo-text {
-    font-size: 2.5rem;
-    font-weight: 900;
-    color: #81e6d9;
-    text-shadow: 0 0 20px rgba(129, 230, 217, 0.5);
-    margin-bottom: 10px;
+
+function enterLobby() {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('waiting-screen').classList.add('active');
+    document.getElementById('displayRoomCode').innerText = currentRoomCode;
+    
+    if (isHost) document.getElementById('hostControls').style.display = "block";
+    
+    listenToRoom();
 }
-.dev-tag {
-    background: rgba(129, 230, 217, 0.1);
-    border: 1px solid #81e6d9;
-    border-radius: 20px;
-    padding: 5px 15px;
-    font-size: 0.8rem;
-    display: inline-block;
-    margin-bottom: 30px;
+
+function listenToRoom() {
+    db.ref("rooms/" + currentRoomCode).on("value", snapshot => {
+        const data = snapshot.val();
+        if (!data) return window.location.reload();
+
+        // سیستەمی دەرکردن (Kick)
+        if (!data.players[myName]) {
+            alert("دەرکرایت لە ژوورەکە!");
+            window.location.reload();
+        }
+
+        // نوێکردنەوەی لیستی یاریزانەکان
+        let listHtml = "";
+        Object.keys(data.players).forEach(p => {
+            listHtml += `<li>${p} ${isHost && p !== myName ? `<button onclick="kick('${p}')" class="kick-btn">X</button>` : ''}</li>`;
+        });
+        document.getElementById('playersList').innerHTML = listHtml;
+
+        // کاتێک یاری دەستپێدەکات یان دووبارە دەکرێتەوە
+        if (data.status === "playing") {
+            showGame(data);
+        } else if (data.status === "waiting") {
+            document.getElementById('game-screen').classList.remove('active');
+            document.getElementById('waiting-screen').classList.add('active');
+        }
+    });
 }
-input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 10px;
-    border-radius: 12px;
-    border: none;
-    background: #2d3748;
-    color: white;
-    text-align: center;
+
+function kick(player) {
+    db.ref("rooms/" + currentRoomCode + "/players/" + player).remove();
 }
-.btn-cyan {
-    width: 100%;
-    padding: 15px;
-    background: #63b3ed;
-    border: none;
-    border-radius: 12px;
-    color: #000;
-    font-weight: bold;
-    cursor: pointer;
-    margin-bottom: 15px;
+
+function playAgain() {
+    db.ref("rooms/" + currentRoomCode).update({ status: "waiting" });
 }
-.screen { display: none; }
-.screen.active { display: block; }
-/* ستایلی لیستی یاریزانەکان */
-li {
-    background: rgba(255,255,255,0.1);
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 8px;
-    display: flex;
-    justify-content: space-between;
+
+// لێرەدا دەتوانیت لۆجیکی یارییەکە و وشەکان زیاد بکەیت
+function startGame() {
+    db.ref("rooms/" + currentRoomCode).update({ status: "playing" });
 }
-.kick-btn { background: #f56565; border: none; color: white; padding: 2px 8px; border-radius: 5px; }
+
+function showGame(data) {
+    document.getElementById('waiting-screen').classList.remove('active');
+    document.getElementById('game-screen').classList.add('active');
+    if (isHost) document.getElementById('hostReplay').style.display = "block";
+    document.getElementById('roleDisplay').innerText = "یاری دەستی پێکرد...";
+}
