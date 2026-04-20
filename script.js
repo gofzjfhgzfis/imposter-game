@@ -1,149 +1,183 @@
+// تکایە کۆنفیگی فایەربەیسەکەی خۆت لێرە دابنێ
 const firebaseConfig = {
-    apiKey: "AIzaSyCGX5s8Z8m-DhMXDRVmF0F6Yje_p7A",
-    authDomain: "yousif-eda79.firebaseapp.com",
-    databaseURL: "https://yousif-eda79-default-rtdb.firebaseio.com",
-    projectId: "yousif-eda79"
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_DOMAIN",
+    databaseURL: "YOUR_DATABASE_URL",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
 };
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-let roomID, myKey, isHost = false, timerInterval;
+let myName = "";
+let currentRoomCode = "";
+let isHost = false;
 
 const dictionary = {
     "فیلم": ["ئینتەرستێلار", "ئینسیپشن", "سێڤن", "باتمان", "جۆکەر", "تایتانیک", "هاری پۆتەر", "پیاوی جاڵجاڵۆکە", "کیسەڵەکان", "ئایۆن مەن"],
     "تەکنەلۆژیا": ["کۆمپیوتەر", "ئینتەرنێت", "مۆبایل", "فایەربەیس", "ڕۆبۆت", "پڕۆگرامینگ", "فەیسبووک", "یوتیوب", "گوگڵ", "زیرەکی دەستکرد"],
-    "ئۆتۆمبێل": ["بزوێنەر", "تایە", "گێڕ", "ویل", "لایت", "پەنزین", "جام", "ستێرن", "ڕادێتەر", "پاتری", "بیئێم", "کڕۆڵە", "دۆج", "ئەڤۆلۆن", "مێرسیدس", "لادە", "لاکشمیبای"],
-    "خواردن": ["پیتزا", "بەرگر", "نانی کوردی", "سێو", "مۆز", "کباب", "یاپراخ", "شۆربا", "مریشک", "دۆ"],
+    "ئۆتۆمبێل": ["بزوێنەر", "تایە", "گێڕ", "ویل", "لایت", "پەنزین", "جام", "ستێرن", "ڕادێتەر", "پاتری", "بیئێم", "کڕۆڵە", "دۆج", "ئەڤۆلۆن", "مێرسیدس", "لادە"],
+    "خواردن": ["پیتزا", "بێرگەر", "نانی کوردی", "سێو", "مۆز", "کباب", "یاپراخ", "شۆربا", "مریشک", "دۆ"],
     "وەرزش": ["تۆپی پێ", "ڕاکردن", "مەلەوانی", "تێنس", "باسکە", "مێسی", "ڕۆناڵدۆ", "ڕیاڵ مەدرید", "بەرشەلۆنە", "مۆندیال"],
     "گەیمینگ": ["پۆبجی", "گتای", "ماینکرافت", "پلەیستەیشن", "ئێکس بۆکس", "فۆرتنایت", "ڕۆبلۆکس", "کۆنترۆڵ", "مۆنیتەر", "گەیمەر"],
-    "ئاژەڵان": ["شێر", "پڵنگ", "پشیلە", "سەگ", "فیڵ", "نەهەنگ", "مار", "دایناسۆڕ", "مەیمون", "داڵ"],
-    "زانکۆ": ["تاقیکردنەوە", "محازەرە", "کتێبخانە", "قوتابی", "پڕۆفیسۆر", "پڕۆژە", "نمرە", "قەڵەم", "دەرچوون", "پشوو"],
-    "گەردوون": ["مانگ", "خۆر", "مەریخ", "کونە ڕەشە", "گاڵاکسی", "زەوی", "ئەستێرە", "ناسە", "هەسارە", "کەشتی ئاسمانی"],
-    "گشتی": ["ماڵ", "پرد", "کتێب", "سەعات", "مۆبایل", "ئاو", "پارە", "قوتابخانە", "دەریای سور", "زانکۆ","قەڵەم","پاوەربانک","ئاسمان", "ئاراشتگا"]
+    "ئاژەڵان": ["شێر", "پڵنگ", "پشیلە", "سەگ", "فیڵ", "نەهەنگ", "مار", "دایناسۆڕ", "مەیمون", "داڵ"]
 };
 
-function showScreen(id) {
+function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+    document.getElementById(screenId).classList.add('active');
 }
 
-function updateStatus(s) { if(roomID) db.ref(`rooms/${roomID}/status`).set(s); }
+function createRoom() {
+    myName = document.getElementById('playerName').value.trim();
+    if (!myName) return alert("تکایە ناوت بنووسە");
 
-function initHost() {
+    currentRoomCode = Math.floor(1000 + Math.random() * 9000).toString();
     isHost = true;
-    let name = prompt("ناوەکەت بنووسە:") || "Host";
-    roomID = Math.floor(1000 + Math.random() * 9000).toString();
-    db.ref(`rooms/${roomID}`).set({ status: 'waiting' });
-    const ref = db.ref(`rooms/${roomID}/players`).push({ name: name, votes: 0 });
-    myKey = ref.key;
-    document.getElementById('display-room-id').innerText = roomID;
-    document.getElementById('host-only-ui').style.display = 'block';
-    showScreen('screen-host');
-    listenToPlayers();
-    listenToStatus();
+
+    db.ref("rooms/" + currentRoomCode).set({
+        host: myName, 
+        status: "waiting",
+        players: { [myName]: true }
+    }).then(() => {
+        enterWaitingRoom();
+    });
 }
 
 function joinRoom() {
-    let name = document.getElementById('join-name').value;
-    roomID = document.getElementById('join-code').value;
-    if(!name || !roomID) return alert("زانیارییەکان تەواو بکە");
-    db.ref(`rooms/${roomID}`).once('value', snap => {
-        if(!snap.exists()) return alert("ژوورەکە نییە!");
-        db.ref(`rooms/${roomID}/players`).push({ name: name, votes: 0 }).then(ref => {
-            myKey = ref.key;
-            document.getElementById('display-room-id').innerText = roomID;
-            showScreen('screen-host');
-            listenToPlayers();
-            listenToStatus();
-        });
+    myName = document.getElementById('playerName').value.trim();
+    currentRoomCode = document.getElementById('roomCodeInput').value.trim();
+    if (!myName || !currentRoomCode) return alert("ناوی خۆت و کۆدی ژوور بنووسە");
+
+    db.ref("rooms/" + currentRoomCode).once("value", snapshot => {
+        if (snapshot.exists()) {
+            let roomData = snapshot.val();
+            if (roomData.status === "playing") return alert("یاری دەستی پێکردووە ناتوانیت جۆین بیت!");
+            
+            isHost = false;
+            db.ref("rooms/" + currentRoomCode + "/players").update({
+                [myName]: true
+            }).then(() => {
+                enterWaitingRoom();
+            });
+        } else {
+            alert("ئەم ژوورە بوونی نییە!");
+        }
     });
 }
 
-function listenToPlayers() {
-    db.ref(`rooms/${roomID}/players`).on('value', snap => {
-        const p = snap.val() || {};
-        document.getElementById('player-list').innerHTML = Object.values(p).map(x => `<span class="player-tag">${x.name}</span>`).join("");
-        if(isHost) document.getElementById('btn-start').style.display = Object.keys(p).length >= 1 ? 'block' : 'none';
+function enterWaitingRoom() {
+    document.getElementById('displayRoomCode').innerText = currentRoomCode;
+    if (isHost) document.getElementById('hostControls').style.display = "block";
+    listenToRoom();
+}
+
+function listenToRoom() {
+    db.ref("rooms/" + currentRoomCode).on("value", snapshot => {
+        if (!snapshot.exists()) {
+            alert("ژوورەکە داخرا.");
+            window.location.reload();
+            return;
+        }
+
+        let roomData = snapshot.val();
+        let players = roomData.players || {};
+
+        // ئەگەر ناوم نەما لە لیستەکە، واتە دەرکراوم
+        if (!players[myName]) {
+            alert("لەلایەن خاوەنی ژوورەکەوە دەرکرایت!");
+            window.location.reload();
+            return;
+        }
+
+        // کۆنترۆڵکردنی شاشەکان بەپێی دۆخی یارییەکە
+        if (roomData.status === "waiting") {
+            showScreen('waiting-screen');
+            updatePlayersList(roomData);
+        } else if (roomData.status === "playing") {
+            showGameScreen(roomData);
+        }
     });
+}
+
+function updatePlayersList(roomData) {
+    let players = roomData.players || {};
+    let playersListHTML = "";
+    
+    Object.keys(players).forEach(player => {
+        let hostText = (player === roomData.host) ? `<span style="color:#00f2fe; font-size:0.8rem;"> (خاوەن)</span>` : "";
+        playersListHTML += `<li><span>${player} ${hostText}</span>`;
+        
+        // دوگمەی دەرکردن تەنها بۆ خاوەن ژوور
+        if (isHost && player !== myName) {
+            playersListHTML += `<button onclick="kickPlayer('${player}')" class="btn kick-btn">دەرکردن</button>`;
+        }
+        playersListHTML += `</li>`;
+    });
+    document.getElementById('playersList').innerHTML = playersListHTML;
+}
+
+function kickPlayer(playerToKick) {
+    db.ref("rooms/" + currentRoomCode + "/players/" + playerToKick).remove();
 }
 
 function startGame() {
-    const cat = document.getElementById('inp-cat').value;
-    const timeVal = parseInt(document.getElementById('inp-time').value) || 3;
-    const impCount = parseInt(document.getElementById('inp-imps').value) || 1;
-    const pool = dictionary[cat];
-    const word = pool[Math.floor(Math.random() * pool.length)];
+    db.ref("rooms/" + currentRoomCode + "/players").once("value", snapshot => {
+        let playersArray = Object.keys(snapshot.val() || {});
+        if (playersArray.length < 3) return alert("لانی کەم 3 یاریزان پێویستە بۆ دەستپێکردنی یاری");
 
-    db.ref(`rooms/${roomID}/players`).once('value', snap => {
-        const keys = Object.keys(snap.val());
-        let shuffled = keys.sort(() => 0.5 - Math.random());
-        let selectedImps = shuffled.slice(0, Math.min(impCount, keys.length - 1 || 1));
-        db.ref(`rooms/${roomID}`).update({
-            status: 'active', word: word, category: cat, imposters: selectedImps, time: timeVal * 60
+        let categories = Object.keys(dictionary);
+        let randomCategory = categories[Math.floor(Math.random() * categories.length)];
+        let wordsInCategory = dictionary[randomCategory];
+        let randomWord = wordsInCategory[Math.floor(Math.random() * wordsInCategory.length)];
+        
+        let imposterIndex = Math.floor(Math.random() * playersArray.length);
+        let imposterName = playersArray[imposterIndex];
+
+        db.ref("rooms/" + currentRoomCode).update({
+            status: "playing",
+            word: randomWord,
+            category: randomCategory,
+            imposter: imposterName
         });
     });
 }
 
-function listenToStatus() {
-    db.ref(`rooms/${roomID}/status`).on('value', snap => {
-        const s = snap.val();
-        if(s === 'active') runGame();
-        if(s === 'voting') runVoting();
-        if(s === 'results') runResults();
+function showGameScreen(roomData) {
+    showScreen('game-screen');
+    let roleText = "";
+    
+    if (myName === roomData.imposter) {
+        roleText = `<span style="color: #ff4b2b;">تۆ ساختەکاریت (Imposter)!</span> <br><br> جۆری وشەکە: <span style="color: #00f2fe;">${roomData.category}</span>`;
+    } else {
+        roleText = `وشەکە: <span style="color: #38ef7d;">${roomData.word}</span> <br><br> جۆری وشەکە: <span style="color: #00f2fe;">${roomData.category}</span>`;
+    }
+    
+    document.getElementById('roleDisplay').innerHTML = roleText;
+
+    // پیشاندانی دوگمەی 'دووبارە یاریکردنەوە' تەنها بۆ خاوەن ژوور
+    if (isHost) {
+        document.getElementById('playAgainBtn').style.display = "block";
+    }
+}
+
+// فەنکشنی نوێ بۆ گەڕانەوە بۆ لۆبی بەبێ دەرچوون
+function playAgain() {
+    if (!isHost) return;
+    
+    // گۆڕینی دۆخی یارییەکە بۆ چاوەڕوانی (لۆبی)
+    db.ref("rooms/" + currentRoomCode).update({
+        status: "waiting",
+        word: null,
+        category: null,
+        imposter: null
     });
 }
 
-function runGame() {
-    showScreen('screen-game');
-    if(isHost) document.getElementById('stop-game-btn').style.display = 'block';
-    db.ref(`rooms/${roomID}`).once('value', snap => {
-        const d = snap.val();
-        const isImp = d.imposters && d.imposters.includes(myKey);
-        document.getElementById('role-box').innerText = isImp ? "تۆ ساختەکاریت! 🤫" : d.word;
-        document.getElementById('cat-hint').innerText = "کەتەگۆری: " + d.category;
-        startTimer(d.time);
-    });
-}
-
-function startTimer(sec) {
-    let t = sec; clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-        let m = Math.floor(t/60), s = t%60;
-        document.getElementById('game-timer').innerText = `${m}:${s<10?'0':''}${s}`;
-        if(t-- <= 0) { clearInterval(timerInterval); if(isHost) updateStatus('voting'); }
-    }, 1000);
-}
-
-function runVoting() {
-    clearInterval(timerInterval);
-    showScreen('screen-voting');
-    const list = document.getElementById('voting-list');
-    list.innerHTML = '';
-    db.ref(`rooms/${roomID}/players`).once('value', snap => {
-        const players = snap.val();
-        Object.keys(players).forEach(k => {
-            const btn = document.createElement('button');
-            btn.className = 'btn-secondary';
-            btn.innerHTML = `👤 ${players[k].name}`;
-            btn.onclick = () => {
-                document.querySelectorAll('#voting-list button').forEach(b => b.disabled = true);
-                btn.style.background = "var(--primary)"; btn.style.color = "#000";
-                db.ref(`rooms/${roomID}/players/${k}/votes`).transaction(v => (v || 0) + 1);
-            };
-            list.appendChild(btn);
-        });
-    });
-    if(isHost) setTimeout(() => updateStatus('results'), 15000);
-}
-
-function runResults() {
-    showScreen('screen-results');
-    db.ref(`rooms/${roomID}`).once('value', snap => {
-        const d = snap.val();
-        let imps = d.imposters.map(k => d.players[k].name).join(" و ");
-        document.getElementById('imposter-reveal').innerText = "ساختەکارەکان: " + imps;
-        let sum = "";
-        Object.values(d.players).forEach(p => sum += `• ${p.name}: ${p.votes || 0} دەنگ<br>`);
-        document.getElementById('vote-summary').innerHTML = sum;
+function leaveRoom() {
+    db.ref("rooms/" + currentRoomCode + "/players/" + myName).remove().then(() => {
+        window.location.reload();
     });
 }
