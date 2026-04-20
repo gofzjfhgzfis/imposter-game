@@ -2,125 +2,63 @@
 <html lang="ku" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Imposter Pro | یاری ئیمپۆستەر</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>IMPOSTER ULTRA | Yusuf</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
 <body>
-
-    <div class="bg-animation" id="bg-animation"></div>
-
-    <div id="main-wrapper">
-        <div id="loader" class="screen">
-            <div class="spinner"></div>
-            <p>خەریکی بەستنەوەی فایەربەیس...</p>
+    <div id="app">
+        <div id="sc-home" class="screen active">
+            <h1 class="logo">IMPOSTER<span>PRO</span></h1>
+            <div class="main-btns">
+                <button id="btn-create" class="p-btn">دروستکردنی ژوور</button>
+                <button id="btn-join" class="s-btn">جۆین بوون</button>
+            </div>
+            <div class="dev-info">Developed by Yusuf</div>
         </div>
 
-        <div id="home-screen" class="screen active">
-            <div class="hero-section">
-                <h1 class="main-title">IMPOSTER<span>PRO</span></h1>
-                <p class="subtitle">یاری زیرەکی و ساختەکاری</p>
-            </div>
-            
-            <div class="card-grid">
-                <button class="menu-card create" onclick="navigate('setup', 'create')">
-                    <div class="card-icon">🏗️</div>
-                    <div class="card-info">
-                        <h3>دروستکردنی ژوور</h3>
-                        <p>ژوورێکی نوێ و کۆدی تایبەت</p>
-                    </div>
-                </button>
-
-                <button class="menu-card join" onclick="navigate('setup', 'join')">
-                    <div class="card-icon">🔑</div>
-                    <div class="card-info">
-                        <h3>جۆین بوون</h3>
-                        <p>بەشداری لە ژووری هاوڕێکانت</p>
-                    </div>
-                </button>
-            </div>
-
-            <div class="bottom-bar">
-                <button onclick="toggleModal('settings-modal')">⚙️ ڕێکخستن</button>
-                <button onclick="toggleModal('help-modal')">❓ یارمەتی</button>
-            </div>
+        <div id="sc-auth" class="screen">
+            <h2 id="auth-title">ڕێکخستن</h2>
+            <input type="text" id="in-name" placeholder="ناوت بنووسە..." maxlength="10">
+            <input type="number" id="in-code" placeholder="کۆدی ژوور..." style="display: none;">
+            <button id="btn-go" class="p-btn">بەردەوام بوون</button>
+            <button id="btn-back" class="link-btn">گەڕانەوە</button>
         </div>
 
-        <div id="setup-screen" class="screen">
-            <div class="glass-panel">
-                <button class="back-btn" onclick="navigate('home')">←</button>
-                <h2 id="setup-title">ڕێکخستنی یاری</h2>
-                
-                <div class="input-wrapper">
-                    <label>ناوی تۆ:</label>
-                    <input type="text" id="p-name" placeholder="ناوەکەت لێرە بنووسە..." maxlength="12">
-                </div>
-
-                <div id="code-input-wrapper" class="input-wrapper">
-                    <label>کۆدی ژوور:</label>
-                    <input type="number" id="r-code" placeholder="----">
-                </div>
-
-                <button class="btn-confirm" onclick="initSession()">بەردەوام بوون</button>
+        <div id="sc-lobby" class="screen">
+            <div class="room-card">
+                <span>کۆدی ژوور:</span>
+                <h2 id="room-id">----</h2>
             </div>
+            <div class="player-list-container">
+                <p>یاریزانەکان (<span id="p-count">0</span>):</p>
+                <div id="p-list"></div>
+            </div>
+            <div id="host-ui" style="display: none;">
+                <button id="btn-start" class="g-btn">دەستپێکردنی یاری 🚀</button>
+            </div>
+            <button id="btn-leave" class="r-btn">چوونە دەرەوە</button>
         </div>
 
-        <div id="lobby-screen" class="screen">
-            <div class="lobby-header">
-                <div class="room-badge">کۆد: <span id="room-id-display">0000</span></div>
-                <button class="share-btn" onclick="copyCode()">🔗 کۆپی</button>
-            </div>
-
-            <div class="lobby-content">
-                <div class="status-indicator">چاوەڕێی یاریزانەکانین...</div>
-                <div id="players-container" class="players-list"></div>
-            </div>
-
-            <div id="host-zone" class="action-zone" style="display: none;">
-                <div class="game-settings-mini">
-                    <span>کاتی یاری: 60 چرکە</span>
-                </div>
-                <button class="btn-start-game" onclick="requestStart()">دەستپێکردنی یاری 🚀</button>
-            </div>
-        </div>
-
-        <div id="game-screen" class="screen">
-            <div class="game-timer">
-                <div id="timer-bar"></div>
-                <span id="timer-text">01:00</span>
-            </div>
-
-            <div class="role-display-box" onclick="revealRole()">
-                <div id="card-inner" class="card-inner">
-                    <div class="card-front">کلیک بکە بۆ بینینی وشەکە</div>
+        <div id="sc-game" class="screen">
+            <div id="game-info" class="badge">کەتەگۆری: ...</div>
+            <div class="card" id="role-card">
+                <div class="card-inner">
+                    <div class="card-front">کلیک بکە بۆ بینینی وشە</div>
                     <div class="card-back">
-                        <div id="cat-label" class="cat-label">کەتەگۆری</div>
-                        <h2 id="main-word">...</h2>
-                        <p id="role-hint">باسی وشەکە بکە!</p>
+                        <h2 id="word-txt">?</h2>
+                        <p id="hint-txt"></p>
                     </div>
                 </div>
             </div>
-
-            <div class="game-controls">
-                <button class="btn-vote" onclick="startVoting()">دەنگدان</button>
-                <button class="btn-exit" onclick="confirmExit()">چوونە دەرەوە</button>
+            <div id="host-replay" style="display: none;">
+                <button id="btn-reset" class="p-btn">دووبارە کردنەوە</button>
             </div>
+            <button id="btn-quit" class="r-btn">کۆتایی یاری</button>
         </div>
     </div>
-
-    <div id="settings-modal" class="modal">
-        <div class="modal-content glass">
-            <h3>ڕێکخستنەکان</h3>
-            <div class="setting-item">
-                <span>کاریگەری دەنگی</span>
-                <input type="checkbox" id="sound-toggle" checked>
-            </div>
-            <button onclick="toggleModal('settings-modal')">داخستن</button>
-        </div>
-    </div>
-
     <script src="script.js"></script>
 </body>
 </html>
