@@ -1,38 +1,241 @@
+/* Variables & Reset */
+:root {
+    --primary: #00d2ff;
+    --secondary: #3a7bd5;
+    --dark-bg: #0b0e14;
+    --card-bg: #1a1f29;
+    --accent: #ff4b2b;
+    --success: #00f2fe;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
 body {
-    background: #0f172a;
-    color: white;
-    font-family: sans-serif;
+    background-color: var(--dark-bg);
+    color: #ffffff;
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    margin: 0;
+    overflow: hidden;
 }
-#app {
-    width: 320px;
-    background: #1e293b;
-    padding: 30px;
-    border-radius: 20px;
+
+#app-container {
+    width: 100%;
+    max-width: 450px;
+    height: 100%;
+    padding: 20px;
+    position: relative;
+}
+
+/* Screens Management */
+.screen {
+    display: none;
+    height: 100%;
+    flex-direction: column;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.screen.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Header & Logo */
+header {
     text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    margin-top: 50px;
+    margin-bottom: 40px;
 }
-.logo-text { font-size: 2.5rem; color: #38bdf8; margin-bottom: 5px; }
-.dev-tag { font-size: 0.7rem; border: 1px solid #38bdf8; padding: 4px 10px; border-radius: 15px; display: inline-block; margin-bottom: 30px; }
-.screen { display: none; }
-.screen.active { display: block; }
-.btn-main, .btn-primary, .btn-start {
+
+.logo-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+.glitch-text {
+    font-size: 3.5rem;
+    font-weight: 900;
+    letter-spacing: 5px;
+    background: linear-gradient(to bottom, #fff, var(--primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(0, 210, 255, 0.5));
+}
+
+.developer-tag {
+    font-size: 0.8rem;
+    color: var(--primary);
+    background: rgba(0, 210, 255, 0.1);
+    padding: 5px 15px;
+    border-radius: 20px;
+    display: inline-block;
+    border: 1px solid rgba(0, 210, 255, 0.2);
+    margin-top: 10px;
+}
+
+/* Action Cards */
+.main-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.action-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 25px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.action-card:active { transform: scale(0.98); }
+
+.action-card.create { border-left: 5px solid var(--primary); }
+.action-card.join { border-left: 5px solid #6366f1; }
+
+.action-card .icon { font-size: 2rem; }
+.action-card span { font-size: 1.2rem; font-weight: bold; }
+
+/* Inputs & Forms */
+.form-container {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 25px;
+    margin-top: 20px;
+}
+
+.input-field {
+    margin-bottom: 20px;
+}
+
+.input-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: #94a3b8;
+}
+
+input {
     width: 100%;
     padding: 15px;
     border-radius: 12px;
-    border: none;
-    font-weight: bold;
-    cursor: pointer;
-    margin-bottom: 15px;
-    font-size: 1rem;
+    border: 2px solid #2d3748;
+    background: #0f172a;
+    color: white;
+    font-size: 1.1rem;
+    text-align: center;
 }
-.create, .btn-primary { background: #38bdf8; color: #0f172a; }
-.join { background: #334155; color: white; }
-.btn-start { background: #22c55e; color: white; }
-input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 10px; border: none; background: #334155; color: white; text-align: center; }
-.btn-back, .btn-leave { background: none; border: none; color: #94a3b8; cursor: pointer; text-decoration: underline; }
-li { background: #0f172a; padding: 10px; margin: 5px 0; border-radius: 8px; display: flex; justify-content: space-between; }
+
+input:focus { border-color: var(--primary); outline: none; }
+
+.confirm-btn {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(45deg, var(--primary), var(--secondary));
+    border: none;
+    border-radius: 15px;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(0, 210, 255, 0.3);
+}
+
+/* Lobby Styling */
+.room-header {
+    background: linear-gradient(45deg, #1e293b, #0f172a);
+    padding: 30px;
+    border-radius: 25px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.code-box h2 {
+    font-size: 2.5rem;
+    color: var(--success);
+    margin: 10px 0;
+    letter-spacing: 5px;
+}
+
+.players-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.player-item {
+    background: #2d3748;
+    padding: 15px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.kick-btn {
+    background: #ef4444;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 0.7rem;
+}
+
+/* Game Play Styling */
+.game-card-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.role-revealed {
+    background: rgba(255,255,255,0.05);
+    padding: 40px;
+    border-radius: 30px;
+    width: 100%;
+    text-align: center;
+    border: 2px dashed var(--primary);
+}
+
+#word-display {
+    font-size: 2.5rem;
+    color: var(--success);
+    margin-bottom: 10px;
+}
+
+/* Modals */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 20px;
+    max-width: 80%;
+    text-align: center;
+}
