@@ -1,126 +1,233 @@
-<!DOCTYPE html>
-<html lang="ku" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Imposter Game | یاری ساختەکار</title>
-    <link rel="stylesheet" href="style.css">
+/**
+ * Imposter Game Engine v2.0
+ * Developed by Yusuf
+ */
+
+// --- 1. Firebase Initialization ---
+const firebaseConfig = {
+    apiKey: "لێرە كلیلەكە دانێ",
+    authDomain: "yousif-eda79.firebaseapp.com",
+    databaseURL: "https://yousif-eda79-default-rtdb.firebaseio.com",
+    projectId: "yousif-eda79",
+    storageBucket: "yousif-eda79.appspot.com",
+    appId: "لێرە ئایدیەكە دانێ"
+};
+
+// Start Firebase with safety check
+try {
+    firebase.initializeApp(firebaseConfig);
+    console.log("Firebase Connected Successfully");
+} catch (error) {
+    console.error("Firebase Connection Failed: ", error);
+}
+
+const db = firebase.database();
+
+// --- 2. Global State ---
+let userSession = {
+    name: "",
+    roomCode: "",
+    isHost: false,
+    currentRole: "player"
+};
+
+// --- 3. Massive Dictionary (سەدان وشە) ---
+const GameDictionary = {
+    "خواردن": ["پیتزا", "کباب", "یاپراخ", "بێرگەر", "شۆربا", "مریشک", "دۆلمە", "برنج", "ماسی", "کوتلێت", "فەلافل", "لوبیا", "ساوەر", "نیسک"],
+    "تەکنەلۆژیا": ["مۆبایل", "کۆمپیوتەر", "ئینتەرنێت", "ڕۆبۆت", "فەیسبووک", "ئایفۆن", "فایەربەیس", "پڕۆگرامینگ", "سۆشیاڵ میدیا", "لاپتۆپ", "تەختەکلیل"],
+    "ئاژەڵان": ["شێر", "پشیلە", "سەگ", "فیل", "مار", "پڵنگ", "کیسەڵ", "کەروێشک", "وشتر", "گوێدرێژ", "مەیمون", "دایناسۆڕ", "نەهەنگ", "کوڕەبڕە"],
+    "وەرزش": ["تۆپی پێ", "مەلەوانی", "ڕاکردن", "تێنس", "باسکە", "کۆنگ فو", "بۆکسێن", "سەرکەوتن بەسەر چیا", "بالە", "جودۆ", "شەتڕەنج"],
+    "فیلمەکان": ["باتمان", "جۆکەر", "تایتانیک", "سپایدەرمان", "هاری پۆتەر", "ئینتەرستێلار", "ئینسیپشن", "سێڤن", "باربی", "ئۆپنهایمەر"],
+    "وڵاتان": ["کوردستان", "عێراق", "تورکیا", "ئێران", "ئەڵمانیا", "فەڕەنسا", "ئەمریکا", "بەریتانیا", "ژاپۆن", "چین", "ئیتاڵیا", "بەڕازیل"],
+    "ئۆتۆمبێل": ["بی ئێم دەبلیو", "مێرسیدس", "تۆۆیۆتا", "نیسان", "دۆج", "فۆرد", "تێسلا", "لامبۆرگینی", "فێراری", "ڕێنج ڕۆڤەر"],
+    "پڕۆگرامینگ": ["پایسۆن", "جاڤاسکریپت", "سی پڵەس پڵەس", "جاڤا", "کۆتڵین", "سویفت", "پی ئێچ پی", "ڕۆبی", "گۆ", "تایپ سکریپت"]
+};
+
+// --- 4. Navigation & UI Logic ---
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(screenId);
+    if(target) target.classList.add('active');
+    else console.error(`Screen ${screenId} not found!`);
+}
+
+window.showMode = function(mode) {
+    userSession.mode = mode;
+    showScreen('auth-screen');
+    const title = document.getElementById('mode-title');
+    const joinSection = document.getElementById('join-section');
     
-    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-database-compat.js"></script>
-</head>
-<body>
+    if (mode === 'create') {
+        title.innerText = "دروستکردنی ژووری نوێ";
+        joinSection.style.display = "none";
+    } else {
+        title.innerText = "جۆین بوونی ژوور";
+        joinSection.style.display = "block";
+    }
+};
 
-    <div id="app-container">
-        <div id="start-screen" class="screen active">
-            <header>
-                <div class="logo-wrapper">
-                    <h1 class="glitch-text">IMPOSTER</h1>
-                    <div class="glow-effect"></div>
-                </div>
-                <p class="developer-tag">Designed & Developed by Yusuf</p>
-            </header>
+// --- 5. Room Management ---
+window.handleAction = function() {
+    const nameInput = document.getElementById('playerName');
+    userSession.name = nameInput.value.trim();
 
-            <div class="main-actions">
-                <button class="action-card create" onclick="showMode('create')">
-                    <div class="icon">🏠</div>
-                    <span>دروستکردنی ژووری نوێ</span>
-                </button>
+    if (!userSession.name) return alert("تکایە ناوت بنووسە!");
+
+    if (userSession.mode === 'create') {
+        userSession.roomCode = Math.floor(1000 + Math.random() * 9000).toString();
+        userSession.isHost = true;
+        
+        db.ref("rooms/" + userSession.roomCode).set({
+            host: userSession.name,
+            status: "waiting",
+            players: { [userSession.name]: true },
+            createdAt: Date.now()
+        }).then(() => enterLobby());
+    } else {
+        userSession.roomCode = document.getElementById('roomCodeInput').value.trim();
+        if (!userSession.roomCode) return alert("کۆدی ژوورەکە بنووسە!");
+        
+        db.ref("rooms/" + userSession.roomCode).once("value", snapshot => {
+            if (snapshot.exists()) {
+                const room = snapshot.val();
+                if (room.status !== "waiting") return alert("یارییەکە دەستی پێکردووە!");
                 
-                <button class="action-card join" onclick="showMode('join')">
-                    <div class="icon">🔑</div>
-                    <span>جۆین بوون بە ژوور</span>
-                </button>
-            </div>
+                db.ref("rooms/" + userSession.roomCode + "/players/" + userSession.name).set(true);
+                userSession.isHost = false;
+                enterLobby();
+            } else {
+                alert("ئەم ژوورە بوونی نییە!");
+            }
+        });
+    }
+};
 
-            <footer class="app-footer">
-                <button onclick="toggleRules()" class="rules-link">چۆنیەتی یاریکردن؟</button>
-            </footer>
-        </div>
+function enterLobby() {
+    showScreen('waiting-screen');
+    document.getElementById('displayRoomCode').innerText = userSession.roomCode;
+    
+    if (userSession.isHost) {
+        document.getElementById('host-panel').style.display = "block";
+    }
 
-        <div id="auth-screen" class="screen">
-            <div class="header-inner">
-                <button class="back-btn" onclick="showScreen('start-screen')">🔙 گەڕانەوە</button>
-                <h2 id="mode-title">ڕێکخستن</h2>
-            </div>
+    listenToRoomUpdates();
+}
 
-            <div class="form-container">
-                <div class="input-field">
-                    <label>ناوەکەت:</label>
-                    <input type="text" id="playerName" placeholder="بۆ نموونە: یوسف" maxlength="15">
+function listenToRoomUpdates() {
+    const roomRef = db.ref("rooms/" + userSession.roomCode);
+    
+    roomRef.on("value", snapshot => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        // Check if I am kicked
+        if (!data.players || !data.players[userSession.name]) {
+            roomRef.off();
+            alert("تۆ لە ژوورەکە دەرکرایت!");
+            window.location.reload();
+            return;
+        }
+
+        // Update Player List
+        const players = Object.keys(data.players);
+        document.getElementById('playerCount').innerText = players.length;
+        
+        let html = "";
+        players.forEach(p => {
+            const isHostLabel = p === data.host ? " 👑" : "";
+            html += `
+                <div class="player-item">
+                    <span>${p}${isHostLabel}</span>
+                    ${userSession.isHost && p !== userSession.name ? 
+                        `<button class="kick-btn" onclick="kickPlayer('${p}')">دەرکردن</button>` : ''}
                 </div>
+            `;
+        });
+        document.getElementById('playersList').innerHTML = html;
 
-                <div id="join-section" class="input-field" style="display: none;">
-                    <label>کۆدی ژوور:</label>
-                    <input type="number" id="roomCodeInput" placeholder="0000">
-                </div>
+        // Handle Game Status Changes
+        if (data.status === "playing") {
+            processGameStart(data);
+        } else if (data.status === "waiting") {
+            showScreen('waiting-screen');
+        }
+    });
+}
 
-                <button id="main-action-btn" onclick="handleAction()" class="confirm-btn">بەردەوام بوون</button>
-            </div>
-        </div>
+// --- 6. Game Execution Logic ---
+window.startGame = function() {
+    const roomRef = db.ref("rooms/" + userSession.roomCode);
+    
+    roomRef.once("value", snapshot => {
+        const players = Object.keys(snapshot.val().players);
+        if (players.length < 3) return alert("بۆ دەستپێکردن لانی کەم ٣ یاریزان پێویستە!");
 
-        <div id="waiting-screen" class="screen">
-            <div class="room-header">
-                <div class="code-box">
-                    <span>کۆدی ژوور</span>
-                    <h2 id="displayRoomCode">----</h2>
-                    <button class="copy-btn" onclick="copyRoomCode()">کۆپی کۆد</button>
-                </div>
-            </div>
+        // Randomly pick category and word
+        const categories = Object.keys(GameDictionary);
+        const selectedCat = categories[Math.floor(Math.random() * categories.length)];
+        const words = GameDictionary[selectedCat];
+        const selectedWord = words[Math.floor(Math.random() * words.length)];
+        
+        // Pick Imposter
+        const imposter = players[Math.floor(Math.random() * players.length)];
 
-            <div class="players-section">
-                <div class="section-title">یاریزانە ئامادەبووەکان (<span id="playerCount">0</span>)</div>
-                <div class="players-grid" id="playersList">
-                    </div>
-            </div>
+        roomRef.update({
+            status: "playing",
+            category: selectedCat,
+            word: selectedWord,
+            imposter: imposter,
+            gameId: Date.now()
+        });
+    });
+};
 
-            <div id="host-panel" class="host-controls" style="display: none;">
-                <p class="host-note">تۆ خاوەنی ژووریت، کاتێک هەمووان ئامادە بوون دەستپێبکە.</p>
-                <button onclick="startGame()" class="start-game-btn">دەستپێکردنی یاری 🚀</button>
-            </div>
-        </div>
+function processGameStart(data) {
+    showScreen('game-screen');
+    document.getElementById('game-category').innerText = "کەتەگۆری: " + data.category;
+    
+    const wordDisplay = document.getElementById('word-display');
+    const roleDesc = document.getElementById('role-description');
+    
+    if (userSession.name === data.imposter) {
+        wordDisplay.innerText = "تۆ ساختەکاری!";
+        wordDisplay.style.color = "#ff4b2b";
+        roleDesc.innerText = "هەوڵ بدە بزانیت وشەکە چییە بێ ئەوەی ئاشکرا بیت.";
+    } else {
+        wordDisplay.innerText = data.word;
+        wordDisplay.style.color = "#00f2fe";
+        roleDesc.innerText = "باسی وشەکە بکە بە وریایی بۆ ئەوەی ساختەکارەکە نەزانێت.";
+    }
 
-        <div id="game-screen" class="screen">
-            <div class="game-status-bar">
-                <span id="game-category">کەتەگۆری: بارکراوە</span>
-            </div>
+    if (userSession.isHost) {
+        document.getElementById('replay-section').style.display = "block";
+    }
+}
 
-            <div class="game-card-container">
-                <div class="card-inner">
-                    <div class="card-front">
-                        <div class="role-icon">🔍</div>
-                        <h3 id="role-title">ڕۆڵەکەت ببینە</h3>
-                        <p>کلیک بکە بۆ نیشاندانی وشەکە</p>
-                    </div>
-                </div>
-                
-                <div id="role-box" class="role-revealed">
-                    <h2 id="word-display">...</h2>
-                    <p id="role-description">تۆ یاریزانی ئاسایتی</p>
-                </div>
-            </div>
+window.playAgain = function() {
+    db.ref("rooms/" + userSession.roomCode).update({
+        status: "waiting",
+        word: null,
+        imposter: null
+    });
+};
 
-            <div id="replay-section" class="replay-controls" style="display: none;">
-                <button onclick="playAgain()" class="play-again-btn">دووبارە یاریکردنەوە 🔄</button>
-            </div>
+window.kickPlayer = function(pName) {
+    db.ref("rooms/" + userSession.roomCode + "/players/" + pName).remove();
+};
 
-            <button onclick="leaveRoom()" class="exit-btn">چوونە دەرەوە لە یاری</button>
-        </div>
+window.leaveRoom = function() {
+    if(confirm("دڵنیای لە چوونە دەرەوە؟")){
+        db.ref("rooms/" + userSession.roomCode + "/players/" + userSession.name).remove()
+        .then(() => window.location.reload());
+    }
+};
 
-        <div id="rules-modal" class="modal">
-            <div class="modal-content">
-                <h3>یاساکانی یاری</h3>
-                <ul>
-                    <li>دەبێت لانی کەم ٣ یاریزان هەبن.</li>
-                    <li>یەکێک بە شێوەی تیروپشک دەبێتە ساختەکار (Imposter).</li>
-                    <li>ئەوانی تر وشەکە دەزانن، بەڵام ساختەکارەکە نایزانێت.</li>
-                    <li>بە نۆرە باسی وشەکە بکەن بێ ئەوەی ئاشکرای بکەن.</li>
-                </ul>
-                <button onclick="toggleRules()">تێگەیشتم</button>
-            </div>
-        </div>
-    </div>
+window.copyRoomCode = function() {
+    navigator.clipboard.writeText(userSession.roomCode);
+    alert("کۆدەکە کۆپی کرا: " + userSession.roomCode);
+};
 
-    <script src="script.js"></script>
-</body>
-</html>
+window.toggleRules = function() {
+    const modal = document.getElementById('rules-modal');
+    modal.style.display = modal.style.display === "flex" ? "none" : "flex";
+};
