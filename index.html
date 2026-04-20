@@ -3,85 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title> developed by Yousif </title>
+    <title>Imposter Game</title>
+    
     <link rel="stylesheet" href="style.css">
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-database-compat.js"></script>
 </head>
 <body>
-
-    <div class="bg-animation"></div>
-
-    <div class="glass-card">
-        <div id="screen-lobby" class="screen active">
+    <div id="app">
+        <div id="main-screen" class="screen active">
             <h1 class="logo-text">IMPOSTER</h1>
-            <div class="creator-badge">
-                <span class="pulse-dot"></span>
-                گـەشـەپـێـدراوە لـەلایـەن یـوسـف
+            <p class="credit">گەشەپێدراوە لەلایەن یوسف</p>
+            <input type="text" id="playerName" placeholder="ناوت بنووسە...">
+            <button onclick="createRoom()" class="btn primary">دروستکردنی ژوور</button>
+            <div class="join-box">
+                <input type="number" id="roomCodeInput" placeholder="کۆدی ژوور...">
+                <button onclick="joinRoom()" class="btn secondary">جۆین بوون</button>
             </div>
-            <button onclick="initHost()">دروستکردنی ژوور</button>
-            <button class="btn-secondary" onclick="showScreen('screen-join')">جۆین بوون</button>
         </div>
 
-        <div id="screen-host" class="screen">
-            <h3 style="opacity:0.6; font-size: 13px;">کۆدی ژوورەکەت</h3>
-            <div class="room-code" id="display-room-id">----</div>
+        <div id="waiting-screen" class="screen">
+            <h2>کۆدی ژوور: <span id="displayRoomCode" style="color: #00f2fe;"></span></h2>
+            <h3 style="margin-top: 15px; margin-bottom: 10px;">یاریزانەکان:</h3>
+            <ul id="playersList"></ul>
+            <div id="hostControls" style="display: none;">
+                <button onclick="startGame()" class="btn start-btn">دەستپێکردنی یاری</button>
+            </div>
+        </div>
+
+        <div id="game-screen" class="screen">
+            <h2 id="roleDisplay" style="line-height: 1.5; font-size: 1.5rem;">وشەکە: ...</h2>
             
-            <div id="host-only-ui" style="display:none; text-align: right;">
-                <div class="settings-grid">
-                    <div class="input-group">
-                        <label>خولەک ⏱️</label>
-                        <input type="number" id="inp-time" value="3" min="1">
-                    </div>
-                    <div class="input-group">
-                        <label>ساختەکار 🕵️</label>
-                        <input type="number" id="inp-imps" value="1" min="1">
-                    </div>
-                </div>
-                
-                <label>کەتەگۆری یاری 🎭</label>
-                <select id="inp-cat" class="category-select">
-                    <option value="گشتی">🌍 گشتی</option>
-                    <option value="فیلم">🎬 فیلم و سینەما</option>
-                    <option value="تەکنەلۆژیا">💻 تەکنەلۆژیا</option>
-                    <option value="ئۆتۆمبێل">🏎️ ئۆتۆمبێل</option>
-                    <option value="خواردن">🍕 خواردن و میوە</option>
-                    <option value="وەرزش">⚽ وەرزش</option>
-                    <option value="گەیمینگ">🎮 یارییە ڤیدیۆییەکان</option>
-                    <option value="ئاژەڵان">🐾 ئاژەڵان</option>
-                    <option value="زانکۆ">🎓 ژیانی زانکۆ</option>
-                    <option value="گەردوون">🚀 گەردوون</option>
-                </select>
-            </div>
-            <div id="player-list" class="player-container"></div>
-            <button id="btn-start" style="display:none;" onclick="startGame()">دەستپێکردن ⚡</button>
-        </div>
-
-        <div id="screen-join" class="screen">
-            <h2>چوونە ناو ژوور</h2>
-            <input type="text" id="join-name" placeholder="ناوەکەت بنووسە">
-            <input type="number" id="join-code" placeholder="کۆدی ژوور">
-            <button onclick="joinRoom()">چوونە ناوەوە</button>
-            <button class="btn-outline" onclick="showScreen('screen-lobby')">گەڕانەوە</button>
-        </div>
-
-        <div id="screen-game" class="screen">
-            <div class="timer" id="game-timer">00:00</div>
-            <div id="role-box" class="word-box">...</div>
-            <p id="cat-hint" style="opacity:0.8; font-weight:bold;"></p>
-            <button id="stop-game-btn" style="display:none; background: #ff4b2b; color: white;" onclick="updateStatus('voting')">کۆتایی و دەنگدان</button>
-        </div>
-
-        <div id="screen-voting" class="screen">
-            <h2 style="margin-bottom:20px;">کێ گوماناوییە؟ 🧐</h2>
-            <div id="voting-list" class="voting-grid"></div>
-        </div>
-
-        <div id="screen-results" class="screen">
-            <h2 style="color:#ff4b2b;">ئەنجامەکان</h2>
-            <div id="imposter-reveal" class="word-box-results"></div>
-            <div id="vote-summary" class="summary-list"></div>
-            <button style="margin-top:20px;" onclick="location.reload()">دووبارە یاری 🔄</button>
+            <button id="playAgainBtn" onclick="playAgain()" class="btn start-btn" style="display: none; margin-top: 20px;">دووبارە یاریکردنەوە</button>
+            
+            <button onclick="leaveRoom()" class="btn secondary" style="margin-top: 10px;">چوونە دەرەوە</button>
         </div>
     </div>
 
