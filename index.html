@@ -2,49 +2,125 @@
 <html lang="ku" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Imposter Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Imposter Game | یاری ساختەکار</title>
     <link rel="stylesheet" href="style.css">
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-database-compat.js"></script>
 </head>
 <body>
-    <div id="app">
+
+    <div id="app-container">
         <div id="start-screen" class="screen active">
-            <h1 class="logo-text">IMPOSTER</h1>
-            <div class="dev-tag">گەشەپێدراوە لەلایەن یوسف</div>
-            <button onclick="showMode('create')" class="btn-main create">دروستکردنی ژوور</button>
-            <button onclick="showMode('join')" class="btn-main join">جۆین بوون</button>
+            <header>
+                <div class="logo-wrapper">
+                    <h1 class="glitch-text">IMPOSTER</h1>
+                    <div class="glow-effect"></div>
+                </div>
+                <p class="developer-tag">Designed & Developed by Yusuf</p>
+            </header>
+
+            <div class="main-actions">
+                <button class="action-card create" onclick="showMode('create')">
+                    <div class="icon">🏠</div>
+                    <span>دروستکردنی ژووری نوێ</span>
+                </button>
+                
+                <button class="action-card join" onclick="showMode('join')">
+                    <div class="icon">🔑</div>
+                    <span>جۆین بوون بە ژوور</span>
+                </button>
+            </div>
+
+            <footer class="app-footer">
+                <button onclick="toggleRules()" class="rules-link">چۆنیەتی یاریکردن؟</button>
+            </footer>
         </div>
 
         <div id="auth-screen" class="screen">
-            <h2 id="mode-title"></h2>
-            <input type="text" id="playerName" placeholder="ناوت بنووسە..." autocomplete="off">
-            <input type="number" id="roomCodeInput" placeholder="کۆدی ژوور..." style="display: none;">
-            <button onclick="handleAction()" class="btn-primary">بەردەوام بوون</button>
-            <button onclick="showScreen('start-screen')" class="btn-back">گەڕانەوە</button>
+            <div class="header-inner">
+                <button class="back-btn" onclick="showScreen('start-screen')">🔙 گەڕانەوە</button>
+                <h2 id="mode-title">ڕێکخستن</h2>
+            </div>
+
+            <div class="form-container">
+                <div class="input-field">
+                    <label>ناوەکەت:</label>
+                    <input type="text" id="playerName" placeholder="بۆ نموونە: یوسف" maxlength="15">
+                </div>
+
+                <div id="join-section" class="input-field" style="display: none;">
+                    <label>کۆدی ژوور:</label>
+                    <input type="number" id="roomCodeInput" placeholder="0000">
+                </div>
+
+                <button id="main-action-btn" onclick="handleAction()" class="confirm-btn">بەردەوام بوون</button>
+            </div>
         </div>
 
         <div id="waiting-screen" class="screen">
-            <h2 class="lobby-title">کۆدی ژوور: <span id="displayRoomCode"></span></h2>
-            <ul id="playersList"></ul>
-            <div id="hostControls" style="display: none;">
-                <button onclick="startGame()" class="btn-start">دەستپێکردنی یاری</button>
+            <div class="room-header">
+                <div class="code-box">
+                    <span>کۆدی ژوور</span>
+                    <h2 id="displayRoomCode">----</h2>
+                    <button class="copy-btn" onclick="copyRoomCode()">کۆپی کۆد</button>
+                </div>
             </div>
-            <button onclick="leaveRoom()" class="btn-leave">چوونە دەرەوە</button>
+
+            <div class="players-section">
+                <div class="section-title">یاریزانە ئامادەبووەکان (<span id="playerCount">0</span>)</div>
+                <div class="players-grid" id="playersList">
+                    </div>
+            </div>
+
+            <div id="host-panel" class="host-controls" style="display: none;">
+                <p class="host-note">تۆ خاوەنی ژووریت، کاتێک هەمووان ئامادە بوون دەستپێبکە.</p>
+                <button onclick="startGame()" class="start-game-btn">دەستپێکردنی یاری 🚀</button>
+            </div>
         </div>
 
         <div id="game-screen" class="screen">
-            <div class="game-card">
-                <div id="categoryLabel" class="category-badge"></div>
-                <div id="roleDisplay" class="role-text"></div>
+            <div class="game-status-bar">
+                <span id="game-category">کەتەگۆری: بارکراوە</span>
             </div>
-            <div id="hostReplay" style="display: none;">
-                <button onclick="playAgain()" class="btn-primary">دووبارە یاریکردنەوە</button>
+
+            <div class="game-card-container">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div class="role-icon">🔍</div>
+                        <h3 id="role-title">ڕۆڵەکەت ببینە</h3>
+                        <p>کلیک بکە بۆ نیشاندانی وشەکە</p>
+                    </div>
+                </div>
+                
+                <div id="role-box" class="role-revealed">
+                    <h2 id="word-display">...</h2>
+                    <p id="role-description">تۆ یاریزانی ئاسایتی</p>
+                </div>
             </div>
-            <button onclick="leaveRoom()" class="btn-leave">کۆتایی یاری</button>
+
+            <div id="replay-section" class="replay-controls" style="display: none;">
+                <button onclick="playAgain()" class="play-again-btn">دووبارە یاریکردنەوە 🔄</button>
+            </div>
+
+            <button onclick="leaveRoom()" class="exit-btn">چوونە دەرەوە لە یاری</button>
+        </div>
+
+        <div id="rules-modal" class="modal">
+            <div class="modal-content">
+                <h3>یاساکانی یاری</h3>
+                <ul>
+                    <li>دەبێت لانی کەم ٣ یاریزان هەبن.</li>
+                    <li>یەکێک بە شێوەی تیروپشک دەبێتە ساختەکار (Imposter).</li>
+                    <li>ئەوانی تر وشەکە دەزانن، بەڵام ساختەکارەکە نایزانێت.</li>
+                    <li>بە نۆرە باسی وشەکە بکەن بێ ئەوەی ئاشکرای بکەن.</li>
+                </ul>
+                <button onclick="toggleRules()">تێگەیشتم</button>
+            </div>
         </div>
     </div>
+
     <script src="script.js"></script>
 </body>
 </html>
