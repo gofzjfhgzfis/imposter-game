@@ -1,159 +1,176 @@
-/* Custom Properties for Global Theme */
-:root {
-    --primary-gradient: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
-    --danger-gradient: linear-gradient(135deg, #ff0844 0%, #ffb199 100%);
-    --glass: rgba(255, 255, 255, 0.05);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --text-main: #f8fafc;
-    --text-dim: #94a3b8;
+/**
+ * IMPOSTER PRO - GAME ENGINE
+ * Developed by Yusuf - CS Student
+ */
+
+// 1. Config & Initialization
+const firebaseConfig = {
+    apiKey: "AIzaSy...", 
+    authDomain: "yousif-eda79.firebaseapp.com",
+    databaseURL: "https://yousif-eda79-default-rtdb.firebaseio.com",
+    projectId: "yousif-eda79",
+    storageBucket: "yousif-eda79.appspot.com",
+    appId: "1:..."
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// State Management
+let state = {
+    user: { name: "", role: "viewer", isHost: false },
+    room: { id: "", status: "waiting", players: {} },
+    game: { timer: 60, active: false }
+};
+
+// 2. Dictionary (Large Dataset)
+const dictionary = {
+    "خواردن": ["پیتزا", "هەمبەرگر", "یاپراخ", "کەباب", "مریشک", "ماسی", "دۆلمە"],
+    "وڵات": ["کوردستان", "ئەڵمانیا", "فەڕەنسا", "ژاپۆن", "ئیتاڵیا", "بەڕازیل"],
+    "وەرزش": ["تۆپی پێ", "تێنس", "مەلەوانی", "باسکە", "کاراتی", "گۆڵف"],
+    "فیلم": ["باتمان", "سپایدەرمان", "تایتانیک", "جۆکەر", "ئینتەرستێلار"]
+};
+
+// 3. Navigation System
+function navigate(screenId, mode = null) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(`${screenId}-screen`).classList.add('active');
+    
+    if (mode === 'create') {
+        document.getElementById('setup-title').innerText = "دروستکردنی ژوور";
+        document.getElementById('code-input-wrapper').style.display = 'none';
+        state.user.isHost = true;
+    } else if (mode === 'join') {
+        document.getElementById('setup-title').innerText = "جۆین بوون";
+        document.getElementById('code-input-wrapper').style.display = 'block';
+        state.user.isHost = false;
+    }
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    user-select: none;
+// 4. Session Initiation & Fix for Joining Issues
+async function initSession() {
+    const nameInput = document.getElementById('p-name').value.trim();
+    if (!nameInput) return alert("ناوەکەت بنووسە!");
+    state.user.name = nameInput;
+
+    if (state.user.isHost) {
+        state.room.id = Math.floor(1000 + Math.random() * 9000).toString();
+        await createRoomOnDB();
+    } else {
+        const codeInput = document.getElementById('r-code').value.trim();
+        if (!codeInput) return alert("کۆدی ژوورەکە بنووسە!");
+        state.room.id = codeInput;
+        await joinRoomOnDB();
+    }
 }
 
-body {
-    background: #020617;
-    color: var(--text-main);
-    height: 100vh;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+async function createRoomOnDB() {
+    const roomRef = db.ref(`rooms/${state.room.id}`);
+    await roomRef.set({
+        host: state.user.name,
+        status: "waiting",
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+    });
+    
+    addPlayerWithPresence();
 }
 
-/* Background Animation */
-.bg-animation {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    z-index: -1;
-    background: radial-gradient(circle at 50% 50%, #1e293b 0%, #020617 100%);
+async function joinRoomOnDB() {
+    const roomRef = db.ref(`rooms/${state.room.id}`);
+    const snapshot = await roomRef.once('value');
+    
+    if (!snapshot.exists()) return alert("ژوورەکە بوونی نییە!");
+    if (snapshot.val().status !== "waiting") return alert("یاری دەستی پێکردووە!");
+    
+    addPlayerWithPresence();
 }
 
-#main-wrapper {
-    width: 100%;
-    max-width: 420px;
-    height: 90vh;
-    position: relative;
-    padding: 20px;
+// Presence Logic: This solves the "Join/Leave" problem
+function addPlayerWithPresence() {
+    const playerRef = db.ref(`rooms/${state.room.id}/players/${state.user.name}`);
+    
+    // کاتێک یاریزانەکە پەیوەندی بڕا، خۆکارانە لە داتابەیس دەسڕێتەوە
+    playerRef.onDisconnect().remove();
+    
+    playerRef.set(true).then(() => {
+        navigate('lobby');
+        document.getElementById('room-id-display').innerText = state.room.id;
+        syncRoomData();
+    });
 }
 
-.screen {
-    display: none;
-    height: 100%;
-    flex-direction: column;
-    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+// 5. Real-time Synchronization
+function syncRoomData() {
+    const roomRef = db.ref(`rooms/${state.room.id}`);
+    
+    roomRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return handleRoomClosed();
+
+        // Update UI Players List
+        const playersList = Object.keys(data.players || {});
+        renderPlayers(playersList, data.host);
+        
+        // Handle Transitions
+        if (data.status === "playing" && !state.game.active) {
+            startClientGame(data);
+        } else if (data.status === "waiting") {
+            resetToLobby();
+        }
+    });
 }
 
-.screen.active { display: flex; }
-
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+function renderPlayers(list, hostName) {
+    const container = document.getElementById('players-container');
+    container.innerHTML = list.map(p => `
+        <div class="player-bubble">
+            <span>${p} ${p === hostName ? '👑' : ''}</span>
+            ${state.user.isHost && p !== state.user.name ? `<button onclick="kick('${p}')">❌</button>` : ''}
+        </div>
+    `).join('');
+    
+    if (state.user.isHost) document.getElementById('host-zone').style.display = 'block';
 }
 
-/* Glass Panel Design */
-.glass-panel {
-    background: var(--glass);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    border-radius: 32px;
-    padding: 30px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+// 6. Gameplay Logic
+function requestStart() {
+    const players = document.getElementById('players-container').children.length;
+    if (players < 3) return alert("بۆ دەستپێکردن لانی کەم ٣ کەس بن!");
+
+    const cats = Object.keys(dictionary);
+    const cat = cats[Math.floor(Math.random() * cats.length)];
+    const word = dictionary[cat][Math.floor(Math.random() * dictionary[cat].length)];
+    
+    db.ref(`rooms/${state.room.id}/players`).once('value', snap => {
+        const pList = Object.keys(snap.val());
+        const imposter = pList[Math.floor(Math.random() * pList.length)];
+        
+        db.ref(`rooms/${state.room.id}`).update({
+            status: "playing",
+            gameData: { cat, word, imposter }
+        });
+    });
 }
 
-/* Menu Cards */
-.card-grid {
-    display: grid;
-    gap: 15px;
-    margin-top: 40px;
+function startClientGame(data) {
+    state.game.active = true;
+    navigate('game');
+    
+    const { cat, word, imposter } = data.gameData;
+    document.getElementById('cat-label').innerText = "کەتەگۆری: " + cat;
+    
+    if (state.user.name === imposter) {
+        document.getElementById('main-word').innerText = "تۆ ئیمپۆستەری!";
+        document.getElementById('main-word').style.color = "#ff4b2b";
+    } else {
+        document.getElementById('main-word').innerText = word;
+        document.getElementById('main-word').style.color = "#00f2fe";
+    }
 }
 
-.menu-card {
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    padding: 20px;
-    border-radius: 24px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-align: right;
-}
-
-.menu-card:hover {
-    background: rgba(255,255,255,0.1);
-    transform: translateX(-5px);
-}
-
-.card-icon {
-    font-size: 2.5rem;
-    background: var(--primary-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.card-info h3 { font-size: 1.2rem; margin-bottom: 4px; }
-.card-info p { color: var(--text-dim); font-size: 0.85rem; }
-
-/* Players List in Lobby */
-.players-list {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 20px;
-    max-height: 50vh;
-    overflow-y: auto;
-}
-
-.player-bubble {
-    background: var(--glass);
-    padding: 15px;
-    border-radius: 18px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: 1px solid var(--glass-border);
-}
-
-/* Role Card Animation */
-.role-display-box {
-    perspective: 1000px;
-    width: 100%;
-    height: 300px;
-    cursor: pointer;
-}
-
-.card-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    text-align: center;
-    transition: transform 0.6s;
-    transform-style: preserve-3d;
-}
-
-.card-inner.flipped { transform: rotateY(180deg); }
-
-.card-front, .card-back {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    backface-visibility: hidden;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    border-radius: 30px;
-    border: 2px solid var(--primary-gradient);
-}
-
-.card-back {
-    background: var(--glass);
-    transform: rotateY(180deg);
+// Helpers
+function revealRole() { document.getElementById('card-inner').classList.toggle('flipped'); }
+function copyCode() { 
+    navigator.clipboard.writeText(state.room.id); 
+    alert("کۆدەکە کۆپی کرا!"); 
 }
